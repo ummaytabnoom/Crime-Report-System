@@ -4,23 +4,8 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, org.apache.commons.io.output.*" %>
 <%@ page import="java.util.*, java.sql.*, java.io.*" %>
 <%@ page import="java.security.MessageDigest" %>
+<%@ page import="utils.PasswordUtil" %>
 
-<%!
-
-    // Utility for password hashing
-    public static class PasswordUtil {
-        public static String hashPassword(String password) throws Exception {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes("UTF-8"));
-
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        }
-    }
-%>
 
 <%
     String message = "";
@@ -63,6 +48,7 @@
             }
 
             // hash the password before saving
+            
             String hashedPassword = PasswordUtil.hashPassword(password);
 
             Class.forName("oracle.jdbc.OracleDriver");
@@ -96,30 +82,51 @@
                 }
             }
 
-         // ... (rest of your code remains the same)
+    
 
             int row = stmt.executeUpdate();
             conn.commit();
-
+            
+            
             if (row > 0) {
                 // Successful registration
-                session.setAttribute("username", userName);
-                session.setAttribute("userRole", registeredRole);
+                int userId = 0;
+                  String idQuery = "SELECT ID FROM REGISTERED_USERS WHERE USER_NAME = ? AND EMAIL = ?";
+                  PreparedStatement idStmt = conn.prepareStatement(idQuery);
+                  idStmt.setString(1, userName);
+                  idStmt.setString(2, email);
 
+                  ResultSet rs = idStmt.executeQuery();
+                  if (rs.next()) {
+                     userId = rs.getInt("ID");
+                     }
+                  rs.close();
+                  idStmt.close();
+                  
+                  session.setAttribute("userId", userId);
+                  session.setAttribute("username", userName);
+                  session.setAttribute("userRole", registeredRole);
+                  
                 // Determine the redirect page based on the role
-                String redirectPage = "Login.jsp"; // Default to Login.jsp
-                
-                if ("admin".equalsIgnoreCase(registeredRole)) {
-                    redirectPage = "UserHomeForAdmin.jsp";
-                } else if ("police".equalsIgnoreCase(registeredRole)) {
-                    redirectPage = "UserHomeForPolice.jsp";
-                } else if ("public".equalsIgnoreCase(registeredRole)) {
-                    redirectPage = "UserHome.jsp";
-                } 
+          
+                String redirectPage = "";
 
-                // Redirect the user
+                if (registeredRole != null) {
+                    if (registeredRole.equalsIgnoreCase("admin")) {
+                        redirectPage = "UserHomeForAdmin.jsp";
+                    } else if (registeredRole.equalsIgnoreCase("police")) {
+                        redirectPage = "UserHomeForPolice.jsp";
+                    } else if (registeredRole.equalsIgnoreCase("public")) {
+                        redirectPage = "UserHome.jsp";
+                    } else {
+                        redirectPage = "Login.jsp"; 
+                    }
+                }
+
+                
                 response.sendRedirect(redirectPage);
-                return; // Stop further execution immediately after redirect
+                return; 
+
                 
             } else {
                 message = "<p class='message error'>Registration failed!</p>";

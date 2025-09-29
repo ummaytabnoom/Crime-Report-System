@@ -1,6 +1,7 @@
 <%@ page import="java.sql.*, java.io.*" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, java.util.*" %>
+<%@ page import="utils.PasswordUtil" %>
 
 <!DOCTYPE html>
 <html>
@@ -234,7 +235,10 @@ button[type="submit"] {
         if ("POST".equalsIgnoreCase(request.getMethod())) {
             String username = request.getParameter("username");
             String email = request.getParameter("email");
-            String password = request.getParameter("password"); 
+            String rawPassword = request.getParameter("password");
+            String hashedPassword = PasswordUtil.hashPassword(rawPassword);
+            System.out.println(hashedPassword);
+
 
             Connection conn = null;
             PreparedStatement pstmt = null;
@@ -248,17 +252,17 @@ button[type="submit"] {
                     pstmt = conn.prepareStatement(sql);
                     pstmt.setString(1, username.trim());
                     pstmt.setString(2, email.trim());
-                    pstmt.setString(3, password.trim());
+                    pstmt.setString(3, hashedPassword);
                     
 
                     rs = pstmt.executeQuery();
 
                     if (rs.next()) {
+                    	session.setAttribute("userId", rs.getInt("ID"));
+                    	session.setAttribute("username", username);
                         String role = rs.getString("ROLE");
-                        System.out.println(role);
-                        session.setAttribute("username", username);
                         session.setAttribute("userRole", role);
-                        session.setAttribute("userId", rs.getInt("ID"));
+                        
                         
                         
 
