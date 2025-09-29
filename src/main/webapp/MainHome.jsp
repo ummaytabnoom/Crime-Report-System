@@ -101,7 +101,7 @@
 </head>
 <body>
 <body style="font-family: Arial; background-color: #FFD580; padding: 40px;">
-    <!-- Navbar -->
+    
     <nav>
         <div class="nav-left">
             <h2>Crime Report System</h2>
