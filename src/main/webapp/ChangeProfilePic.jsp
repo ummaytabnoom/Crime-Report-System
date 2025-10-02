@@ -1,100 +1,127 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
-<%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
-<%@ page import="java.util.List" %>
-<%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="oracle.jdbc.OracleDriver" %>
+<%@ page import="java.util.*" %>         
+<%@ page import="java.io.*" %>          
+<%@ page import="java.util.Base64" %>   
+<%@ page import="utils.PasswordUtil" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
 
 <%
-    request.setCharacterEncoding("UTF-8");
-    boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-
-    String currentUser = (String) session.getAttribute("username");
-    byte[] imageBytes = null;
     String message = "";
-    byte[] fileBytes = null;
+    // Get user data from session
+    Integer currentUserId = (Integer) session.getAttribute("userId");
+    String currentUserName = (String) session.getAttribute("username");
 
-    if (isMultipart && request.getMethod().equalsIgnoreCase("POST")) {
-        DiskFileItemFactory factory = new DiskFileItemFactory();
-        ServletFileUpload upload = new ServletFileUpload(factory);
-
-        try {
-            List<FileItem> items = upload.parseRequest(request);
-           
-
-            for (FileItem item : items) {
-                if (!item.isFormField() && item.getFieldName().equals("profilePic")) {
-                    InputStream fileContent = item.getInputStream();
-
-                    // Convert InputStream to byte[]
-                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                    byte[] temp = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = fileContent.read(temp)) != -1) {
-                        buffer.write(temp, 0, bytesRead);
-                    }
-                    fileBytes = buffer.toByteArray();
-
-                    fileContent.close();
-                }
-            }
-
-            if (fileBytes != null && currentUser != null) {
-                Class.forName("oracle.jdbc.OracleDriver");
-                Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
-
-                String updateSQL = "UPDATE REGISTERED_USERS SET PROFILE_PICTURE = ? WHERE USER_NAME = ?";
-                PreparedStatement pstmt = conn.prepareStatement(updateSQL);
-                pstmt.setBytes(1, fileBytes);
-                pstmt.setString(2, currentUser);
-
-                int row = pstmt.executeUpdate();
-                if (row > 0) {
-                    message = "Profile picture updated successfully.";
-                    response.sendRedirect("ChangeProfilePic.jsp");
-                } else {
-                    message = "Failed to update profile picture.";
-                }
-
-                pstmt.close();
-                conn.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            message = "Error uploading file: " + e.getMessage();
-        }
+    if (currentUserId == null || currentUserName == null) {
+        response.sendRedirect("Login.jsp"); // Redirect to your Login page
+        return; // Stop further execution
     }
 
-    // Load current profile picture
-    if (currentUser != null) {
-        try {
-            Class.forName("oracle.jdbc.OracleDriver");
-            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
-
-            String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, currentUser);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                Blob blob = rs.getBlob("PROFILE_PICTURE");
-                if (blob != null) {
-                    InputStream is = blob.getBinaryStream();
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = is.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
+    byte[] imageBytes = null;
+    
+    // --- 1. FETCH PROFILE PICTURE (Runs on every page load) ---
+    try {
+        Class.forName("oracle.jdbc.OracleDriver");
+        
+        // Using try-with-resources for automatic resource closing
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+             PreparedStatement stmt = conn.prepareStatement(
+                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?")) {
+            
+            stmt.setInt(1, currentUserId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Blob blob = rs.getBlob("PROFILE_PICTURE");
+                    if (blob != null) {
+                        try (InputStream is = blob.getBinaryStream();
+                             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                            
+                            byte[] buffer = new byte[1024];
+                            int bytesRead;
+                            while ((bytesRead = is.read(buffer)) != -1) {
+                                os.write(buffer, 0, bytesRead);
+                            }
+                            imageBytes = os.toByteArray();
+                        }
                     }
-                    imageBytes = os.toByteArray();
-                    is.close();
                 }
             }
+        }
+    } catch (Exception e) {
+        // Log error but allow page to load without a profile picture
+        System.out.println("Error fetching profile picture: " + e.getMessage());
+    }
 
-            rs.close();
-            stmt.close();
-            conn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            message = "Error loading profile picture: " + e.getMessage();
+
+    // --- 2. HANDLE FORM SUBMISSION (Password Change) ---
+    String oldPassword = request.getParameter("oldPassword");
+    String newPassword = request.getParameter("newPassword");
+    String confirmPassword = request.getParameter("confirmPassword");
+    
+    // Check if the form was actually submitted (parameters are not null)
+    if (oldPassword != null && newPassword != null && confirmPassword != null) {
+
+        if (!newPassword.equals(confirmPassword)) {
+            message = "New password and rewrite password do not match.";
+        } else {
+            try {
+                Class.forName("oracle.jdbc.OracleDriver");
+                
+                // Using a separate try-with-resources for the update logic
+                try (Connection conn = DriverManager.getConnection(
+                    "jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345")) {
+
+                    // A. HASH the user's OLD password input for verification
+                    String hashedOldPasswordInput = PasswordUtil.hashPassword(oldPassword);
+                    
+                    String checkSql = "SELECT PASSWORD FROM REGISTERED_USERS WHERE ID = ?";
+                    try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                        checkStmt.setInt(1, currentUserId);
+                        
+                        try (ResultSet rs = checkStmt.executeQuery()) {
+
+                            if (rs.next()) {
+                                String dbHashedPassword = rs.getString("PASSWORD");
+
+                                // B. COMPARE the hashed user input with the database hash
+                                if (dbHashedPassword.equals(hashedOldPasswordInput)) {
+                                    
+                                    // C. HASH the NEW password before storing it
+                                    String hashedNewPassword = PasswordUtil.hashPassword(newPassword);
+                                    
+                                    // Step B: Update New Password
+                                    String updateSql = "UPDATE REGISTERED_USERS SET PASSWORD = ? WHERE ID = ?";
+                                    try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                                        updateStmt.setString(1, hashedNewPassword); // Store the HASH
+                                        updateStmt.setInt(2, currentUserId);
+
+                                        int rowsUpdated = updateStmt.executeUpdate();
+
+                                        if (rowsUpdated > 0) {
+                                            // Redirect after success 
+                                            response.sendRedirect("Settings.jsp?msg=password_updated");
+                                            return; 
+                                        } else {
+                                            message = "Error updating password.";
+                                        }
+                                    }
+
+                                } else {
+                                    message = "Present password is incorrect.";
+                                }
+                            } else {
+                                message = "User not found.";
+                            }
+                        }
+                    }
+                } // Connection conn closed automatically
+
+            } catch (Exception e) {
+                message = "An error occurred during password update: " + e.getMessage();
+                System.out.println("Password Change Error: " + e.getMessage());
+            }
         }
     }
 %>
@@ -102,61 +129,152 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Change Profile Picture</title>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <title>Change Password</title>
     <style>
+        /* --- CSS STYLES --- */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #FAFAD2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0;
+            padding: 0;
             height: 100vh;
+            font-family: Arial, sans-serif;
+            background: url("images/settingsBackground.jpg") no-repeat center center fixed;
+            background-size: cover;
+            /* Added for container centering and vertical layout */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+        .navbar {
+            /* Full width added for consistency */
+            width: 100%; 
+            background-color: #FF8C00;
+            /* Padding for gap between page edge and user pic/menu icon */
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .menu-icon {
+            font-size: 26px;
+            cursor: pointer;
+            position: relative;
+            top: 10px;
+        }
+        .dropdown {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: white;
+            color: black;
+            border-radius: 6px;
+            display: none;
+            flex-direction: column;
+            min-width: 180px;
+            z-index: 999;
+        }
+        .dropdown a {
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown a:hover {
+            background-color: #f2f2f2;
+        }
+        .show {
+            display: flex;
+        }
+        .user-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+        }
+        .user-name {
+            font-weight: bold;
+            color: white;
+            font-size: 25px;
         }
         .container {
-            background-color: white;
-            padding: 30px;
+            background: #fff;
+            padding: 40px;
             border-radius: 10px;
-            width: 500px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            width: 400px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            /* Updated margin-top for gap below navbar (60px = desired vertical gap) */
+            margin-top: 60px; 
+            margin-bottom: 45px;
         }
         h2 {
             text-align: center;
             color: #333;
-            border-bottom: 2px solid #FFA500;
-            padding-bottom: 10px;
+        }
+        form {
+            margin-top: 20px;
         }
         label {
             font-weight: bold;
-            margin-top: 10px;
+            display: block;
+            margin-bottom: 5px;
+            color: #333; 
         }
-        input[type="file"] {
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        input[type="password"], input[type="text"] {
             width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            margin-bottom: 15px;
+            padding: 10px 40px 10px 10px; 
             border-radius: 5px;
             border: 1px solid #ccc;
-        }
-        input[type="submit"] {
-            background-color: #FFA500;
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 5px;
+            box-sizing: border-box;
             font-size: 16px;
         }
+        .toggle-icon {
+            position: absolute;
+            right: 12px;
+            /* Set to 50% to align vertically with the input box */
+            top: 50%; 
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 20px;
+            color: #555;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+        .toggle-icon:hover {
+            color: #FF8C00;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #FF8C00;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
         input[type="submit"]:hover {
-            background-color: #e68a00;
+            background-color: #e67e00;
         }
         .message {
             text-align: center;
             font-weight: bold;
-            color: green;
+            color: <%= message.contains("successfully") ? "green" : "red" %>;
             margin-bottom: 15px;
-        }
-        .error {
-            color: red;
         }
         .back-link {
             text-align: center;
@@ -172,41 +290,92 @@
         .back-link a:hover {
             background-color: #004040;
         }
-        .preview-img {
-            display: block;
-            margin: 0 auto 20px auto;
-            max-width: 200px;
-            height: auto;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-        }
     </style>
 </head>
 <body>
+
+<div class="navbar">
+    <div class="user-info">
+        <% if (imageBytes != null) { %>
+            <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" alt="Profile Picture" />
+        <% } else { %>
+            <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
+        <% } %>
+        <span class="user-name"><%= currentUserName %></span>
+    </div>
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+    <div id="dropdownMenu" class="dropdown">
+        <a href="Logout.jsp">Logout</a>
+    </div>
+</div>
+
 <div class="container">
-    <h2>Change Profile Picture</h2>
+    <h2>Change Password</h2>
 
     <% if (!message.isEmpty()) { %>
-        <div class="message <%= message.contains("Error") || message.contains("Failed") ? "error" : "" %>">
-            <%= message %>
+        <div class="message"><%= message %></div>
+    <% } %>
+
+    <form method="post">
+        <div class="input-wrapper">
+            <label for="oldPassword">Present Password:</label>
+            <input type="password" id="oldPassword" name="oldPassword" required />
+            <i
+                id="toggleIconOld"
+                class="fa-solid fa-eye toggle-icon"
+                onclick="togglePassword('oldPassword', 'toggleIconOld')"
+                title="Show/Hide Present Password"
+            ></i>
         </div>
-    <% } %>
 
-    <% if (imageBytes != null) { %>
-        <img class="preview-img" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" />
-    <% } else { %>
-        <p class="message">No profile picture uploaded.</p>
-    <% } %>
+        <div class="input-wrapper">
+            <label for="newPassword">New Password:</label>
+            <input type="password" id="newPassword" name="newPassword" required />
+            <i
+                id="toggleIconNew"
+                class="fa-solid fa-eye toggle-icon"
+                onclick="togglePassword('newPassword', 'toggleIconNew')"
+                title="Show/Hide New Password"
+            ></i>
+        </div>
 
-    <form method="post" enctype="multipart/form-data">
-        <label>Select New Profile Picture:</label>
-        <input type="file" name="profilePic" accept="image/*" required />
-        <input type="submit" value="Upload">
+        <div class="input-wrapper">
+            <label for="confirmPassword">Rewrite Password:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required />
+            <i
+                id="toggleIconConfirm"
+                class="fa-solid fa-eye toggle-icon"
+                onclick="togglePassword('confirmPassword', 'toggleIconConfirm')"
+                title="Show/Hide Rewritten Password"
+            ></i>
+        </div>
+
+        <input type="submit" value="Change Password" />
     </form>
-
     <div class="back-link">
         <a href="Settings.jsp">Back to Settings</a>
     </div>
 </div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const pwdField = document.getElementById(inputId);
+    const toggleIcon = document.getElementById(iconId);
+
+    if (pwdField.type === "password") {
+        pwdField.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+    } else {
+        pwdField.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+    }
+}
+
+function toggleMenu() {
+    document.getElementById("dropdownMenu").classList.toggle("show");
+}
+</script>
 </body>
 </html>
