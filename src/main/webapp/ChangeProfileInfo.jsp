@@ -182,7 +182,6 @@ if ("POST".equalsIgnoreCase(request.getMethod())) {
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #fff;
-            right: 20px auto;
         }
         .user-name {
             font-weight: bold;
