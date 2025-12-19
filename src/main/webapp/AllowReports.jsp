@@ -289,13 +289,15 @@
             margin-right: 15px;
             border: 2px solid #007BFF;
         }
-        .crime-image {
-            max-width: 400px;
-            max-height: 300px;
-            display: block;
-            margin-top: 15px;
-            border-radius: 8px;
-        }
+	.crime-image {
+	    width: 600px;   /* exact width */
+	    height: 450px;  /* exact height */
+	    display: block;
+	    margin-top: 15px;
+	    border-radius: 8px;
+	}
+
+
         .top-right-buttons {
             position: absolute;
             top: 30px;

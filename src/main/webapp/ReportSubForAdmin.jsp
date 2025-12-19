@@ -5,27 +5,33 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
 
 <%
-//Load current profile picture
-
+    // Set encoding
     request.setCharacterEncoding("UTF-8");
     boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 
     String currentUser = (String) session.getAttribute("username");
     byte[] imageBytes = null;
-    byte[] fileBytes = null;
-	String message = "";
-	//FOR FETCHING PROFILE_PICTURE
-	if (currentUser != null) {
+    String message = "";
+    boolean reportSubmitted = false;
+
+    // Variables to hold user info
+    int userId = 0;
+    String fullName = "";
+
+    // Fetch profile picture and user details
+    if (currentUser != null) {
         try {
             Class.forName("oracle.jdbc.OracleDriver");
             Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
 
-            String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, currentUser);
-            ResultSet rs = stmt.executeQuery();
+            // Fetch profile picture
+            String picSql = "SELECT PROFILE_PICTURE, ID, FULL_NAME FROM REGISTERED_USERS WHERE USER_NAME = ?";
+            PreparedStatement picStmt = conn.prepareStatement(picSql);
+            picStmt.setString(1, currentUser);
+            ResultSet rs = picStmt.executeQuery();
 
             if (rs.next()) {
+                // Fetch profile picture
                 Blob blob = rs.getBlob("PROFILE_PICTURE");
                 if (blob != null) {
                     InputStream is = blob.getBinaryStream();
@@ -38,149 +44,122 @@
                     imageBytes = os.toByteArray();
                     is.close();
                 }
-            }
 
+                // Fetch user ID and full name
+                userId = rs.getInt("ID");
+                fullName = rs.getString("FULL_NAME");
+            }
             rs.close();
-            stmt.close();
+            picStmt.close();
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            message = "Error loading profile picture: " + e.getMessage();
+            message = "Error loading user info: " + e.getMessage();
         }
     }
 
+    // Handle form submission
+    if (isMultipart) {
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        ServletFileUpload upload = new ServletFileUpload(factory);
 
-	if (isMultipart) {
-	    DiskFileItemFactory factory = new DiskFileItemFactory();
-	    ServletFileUpload upload = new ServletFileUpload(factory);
+        String zilla = "";
+        String upazilla = "";
+        String policeStation = "";
+        String area = "";
+        String roadName = "";
+        String roadNo = "";
+        String date = "";
+        String category = "";
+        String description = "";
+        String hideIdentity = "NO"; // default value
+        byte[] demoPicBytes = null;
 
-	    String userName = (String) session.getAttribute("username");
-	    String fullName = "";
-	    String zilla = "";
-	    String upazilla = "";
-	    String policeStation = "";
-	    String area = "";
-	    String roadName = "";
-	    String roadNo = "";
-	    String date = "";
-	    String category = "";
-	    String description = "";
-	    String hideIdentity = "NO"; // default value
+        try {
+            List<FileItem> formItems = upload.parseRequest(request);
 
-	    byte[] demoPicBytes = null;
-	    byte[] profilePicBytes = null;
+            for (FileItem item : formItems) {
+                if (item.isFormField()) {
+                    String fieldName = item.getFieldName();
+                    String fieldValue = item.getString("UTF-8");
 
-	    try {
-	        List<FileItem> formItems = upload.parseRequest(request);
+                    switch (fieldName) {
+                        case "zilla": zilla = fieldValue; break;
+                        case "upazilla": upazilla = fieldValue; break;
+                        case "policeStation": policeStation = fieldValue; break;
+                        case "area": area = fieldValue; break;
+                        case "roadName": roadName = fieldValue; break;
+                        case "roadNo": roadNo = fieldValue; break;
+                        case "date": date = fieldValue; break;
+                        case "category": category = fieldValue; break;
+                        case "description": description = fieldValue; break;
+                        case "hideIdentity": hideIdentity = fieldValue; break;
+                    }
+                } else {
+                    if (item.getName() != null && item.getSize() > 0) {
+                        demoPicBytes = item.get();
+                    }
+                }
+            }
 
-	        for (FileItem item : formItems) {
-	            if (item.isFormField()) {
-	                String fieldName = item.getFieldName();
-	                String fieldValue = item.getString("UTF-8");
+            // Insert into REPORTED_CRIMES
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+            conn.setAutoCommit(false);
 
-	                switch (fieldName) {
-	                    case "fullName": fullName = fieldValue; break;
-	                    case "zilla": zilla = fieldValue; break;
-	                    case "upazilla": upazilla = fieldValue; break;
-	                    case "policeStation": policeStation = fieldValue; break;
-	                    case "area": area = fieldValue; break;
-	                    case "roadName": roadName = fieldValue; break;
-	                    case "roadNo": roadNo = fieldValue; break;
-	                    case "date": date = fieldValue; break;
-	                    case "category": category = fieldValue; break;
-	                    case "description": description = fieldValue; break;
-	                    case "hideIdentity": hideIdentity = fieldValue; break;
-	                    
-	                }
-	            } else {
-	                if (item.getName() != null && item.getSize() > 0) {
-	                    demoPicBytes = item.get(); // 👈 Read file into byte array
-	                }
-	            }
-	        }
+            String sql = "INSERT INTO REPORTED_CRIMES " +
+                         "(ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?, ?)";
 
-	        Class.forName("oracle.jdbc.driver.OracleDriver");
-	        Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
-	        conn.setAutoCommit(false);
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, userId);
+            stmt.setString(2, currentUser);
+            stmt.setString(3, fullName);
+            stmt.setString(4, zilla);
+            stmt.setString(5, upazilla);
+            stmt.setString(6, policeStation);
+            stmt.setString(7, area);
+            stmt.setString(8, roadName);
+            stmt.setString(9, roadNo);
+            stmt.setString(10, date);
+            stmt.setString(11, category);
+            stmt.setString(12, description);
+            stmt.setString(13, "Pending");
+            if (demoPicBytes != null) {
+                stmt.setBytes(14, demoPicBytes);
+            } else {
+                stmt.setNull(14, Types.BLOB);
+            }
+            stmt.setString(15, hideIdentity);
 
-	        // 👇 Fetch PROFILE_PICTURE from REGISTERED_USERS
-	        String profileQuery = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
-	        PreparedStatement profileStmt = conn.prepareStatement(profileQuery);
-	        profileStmt.setString(1, userName);
-	        ResultSet profileRs = profileStmt.executeQuery();
+            int row = stmt.executeUpdate();
+            conn.commit();
 
-	        if (profileRs.next()) {
-	            Blob profileBlob = profileRs.getBlob("PROFILE_PICTURE");
-	            if (profileBlob != null) {
-	                profilePicBytes = profileBlob.getBytes(1, (int) profileBlob.length()); // 👈 Convert to byte[]
-	            }
-	        }
+            if (row > 0) {
+                message = "<p class='message success'>Report submitted successfully.</p>";
+                reportSubmitted = true;
+            } else {
+                message = "<p class='message error'>Failed to submit the report.</p>";
+            }
 
-	        profileRs.close();
-	        profileStmt.close();
+            stmt.close();
+            conn.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            message = "<p class='message error'>Error: " + ex.getMessage() + "</p>";
+        }
+    }
 
-	        // ✅ Insert into REPORTED_CRIMES including profile picture
-	        String sql = "INSERT INTO REPORTED_CRIMES (USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
-	                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?, ?)";
-
-	        PreparedStatement stmt = conn.prepareStatement(sql);
-
-	        stmt.setString(1, userName);
-	        stmt.setString(2, fullName);
-	        stmt.setString(3, zilla);
-	        stmt.setString(4, upazilla);
-	        stmt.setString(5, policeStation);
-	        stmt.setString(6, area);
-	        stmt.setString(7, roadName);
-	        stmt.setString(8, roadNo);
-	        stmt.setString(9, date);
-	        stmt.setString(10, category);
-	        stmt.setString(11, description);
-	        stmt.setString(12, "Pending");
-	        
-
-	        if (demoPicBytes != null) {
-	            stmt.setBytes(13, demoPicBytes);
-	        } else {
-	            stmt.setNull(13, Types.BLOB);
-	        }
-
-	        if (profilePicBytes != null) {
-	            stmt.setBytes(14, profilePicBytes);
-	        } else {
-	            stmt.setNull(14, Types.BLOB);
-	        }
-	        
-	        stmt.setString(14, hideIdentity);  // new line for HIDE_IDENTITY
-
-	        int row = stmt.executeUpdate();
-	        conn.commit();
-
-	        if (row > 0) {
-	            message = "<p class='message success'>Report submitted successfully.</p>";
-	        } else {
-	            message = "<p class='message error'>Failed to submit the report.</p>";
-	        }
-
-	        stmt.close();
-	        conn.close();
-
-	    } catch (Exception ex) {
-	        ex.printStackTrace();
-	        message = "<p class='message error'>Error: " + ex.getMessage() + "</p>";
-	    }
-	}
-
+    if (reportSubmitted) {
+        response.setHeader("Refresh", "3; URL=MyReports.jsp");
+    }
 %>
-
-
-
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Report a Crime</title>
-    <style>
+<style>
         body {
             margin: 0;
             padding: 0;
@@ -370,27 +349,25 @@
             margin-bottom: 10px;
             display: none;
         }
-    </style>
-   
-</head>
+    </style></head>
 <body>
-   <div class="navbar">
-    <div class="navbar-title">
-    <div class="user-info">
-        <% if (imageBytes != null) { %>
-            <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" alt="Profile Picture" />
-        <% } else { %>
-            <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
-        <% } %>
-        <span class="user-name"><%= currentUser %></span>
+    <div class="navbar">
+        <div class="navbar-title">
+            <div class="user-info">
+                <% if (imageBytes != null) { %>
+                    <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" alt="Profile Picture" />
+                <% } else { %>
+                    <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
+                <% } %>
+                <span class="user-name"><%= currentUser %></span>
+            </div>
+        </div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+        <div id="dropdownMenu" class="dropdown">
+            <a href="SettingsForAdmin.jsp">Settings</a>
+            <a href="Logout.jsp">Logout</a>
+        </div>
     </div>
-</div>
-   <div class="menu-icon" onclick="toggleMenu()">☰</div>
-    <div id="dropdownMenu" class="dropdown">
-        <a href="SettingsForAdmin.jsp">Settings</a>
-        <a href="Logout.jsp">Logout</a>
-    </div>
-</div>
 
     <div class="top-right-buttons">
         <a href="UserHomeForAdmin.jsp">User Dashboard</a>
@@ -398,12 +375,15 @@
         <a href="AdminsHome.jsp">AdminsHome</a>
     </div>
 
+
     <div class="container">
         <h2>Crime Reporting Form</h2>
         <%= message %>
-        <form action="ReportSubForAdmin.jsp" method="post" enctype="multipart/form-data">
+        <form action="ReportSub.jsp" method="post" enctype="multipart/form-data">
             <table>
-            	<tr><td>Full Name:</td><td><input type="text" name="fullName" required></td></tr>
+                <!-- Full Name fetched automatically -->
+                <input type="hidden" name="fullName" value="<%= fullName %>">
+
                 <tr><td>Zilla:</td><td><input type="text" name="zilla" required></td></tr>
                 <tr><td>Upazilla:</td><td><input type="text" name="upazilla" required></td></tr>
                 <tr><td>Police Station:</td><td><input type="text" name="policeStation" required></td></tr>
@@ -425,23 +405,21 @@
                 </tr>
                 <tr><td>Description:</td><td><textarea name="description" rows="4" required></textarea></td></tr>
                 <tr><td>Picture of criminals or incident:</td><td><input type="file" name="demoPicture" accept="image/*"></td></tr>
-                
                 <tr>
-    <td>Hide Identity:</td>
-    <td>
-        <select name="hideIdentity" required>
-            <option value="NO" selected>No</option>
-            <option value="YES">Yes</option>
-        </select>
-    </td>
-</tr>
-                
-                
+                    <td>Hide Identity:</td>
+                    <td>
+                        <select name="hideIdentity" required>
+                            <option value="NO" selected>No</option>
+                            <option value="YES">Yes</option>
+                        </select>
+                    </td>
+                </tr>
             </table>
             <input type="submit" value="Submit Report">
         </form>
     </div>
-     <script>
+
+    <script>
         document.addEventListener("DOMContentLoaded", function () {
             const menuIcon = document.querySelector('.menu-icon');
             const dropdownMenu = document.getElementById('dropdownMenu');
@@ -457,35 +435,35 @@
                     }
                 }
             });
-            
-            // Sets the max date to today on page load
+
+            // Sets the max date to today
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             const maxDate = `${yyyy}-${mm}-${dd}`;
             document.getElementById("incidentDate").setAttribute("max", maxDate);
-
         });
-    
-    // Function to validate the incident date
-    function validateIncidentDate() {
-        const incidentDateInput = document.getElementById("incidentDate");
-        const incidentDateError = document.getElementById("incident-date-error");
-        const selectedDate = new Date(incidentDateInput.value);
-        const today = new Date();
 
-        if (selectedDate > today) {
-            incidentDateInput.setCustomValidity("Invalid date.");
-            incidentDateError.textContent = "Invalid date.";
-            incidentDateError.style.display = "block";
-        } else {
-            incidentDateInput.setCustomValidity("");
-            incidentDateError.textContent = "";
-            incidentDateError.style.display = "none";
+        function validateIncidentDate() {
+            const incidentDateInput = document.getElementById("incidentDate");
+            const incidentDateError = document.getElementById("incident-date-error");
+            const selectedDate = new Date(incidentDateInput.value);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            selectedDate.setHours(0,0,0,0);
+
+
+            if (selectedDate > today) {
+                incidentDateInput.setCustomValidity("Invalid date.");
+                incidentDateError.textContent = "Invalid date.";
+                incidentDateError.style.display = "block";
+            } else {
+                incidentDateInput.setCustomValidity("");
+                incidentDateError.textContent = "";
+                incidentDateError.style.display = "none";
+            }
         }
-    }
-
     </script>
 </body>
 </html>
