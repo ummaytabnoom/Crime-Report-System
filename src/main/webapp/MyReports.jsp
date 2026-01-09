@@ -34,13 +34,13 @@
 
         // Fetch all crimes of current user
         PreparedStatement ps = conn.prepareStatement(
-            "SELECT * FROM REPORTED_CRIMES WHERE USER_NAME=? ORDER BY CRIME_ID DESC");
+            "SELECT * FROM REPORTED_CRIMES WHERE USER_NAME=? ORDER BY REPORT_ID DESC");
         ps.setString(1, currentUser);
         ResultSet crimesRs = ps.executeQuery();
 
         while(crimesRs.next()) {
             Map<String,Object> crime = new HashMap<>();
-            crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
+            crime.put("crimeId", crimesRs.getInt("REPORT_ID"));
             crime.put("fullName", crimesRs.getString("FULL_NAME"));
             crime.put("category", crimesRs.getString("CATEGORY"));
             crime.put("description", crimesRs.getString("DESCRIPTION"));

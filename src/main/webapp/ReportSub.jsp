@@ -108,7 +108,7 @@
             conn.setAutoCommit(false);
 
             String sql = "INSERT INTO REPORTED_CRIMES " +
-                         "(ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
+                         "(USER_ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?, ?)";
 
             PreparedStatement stmt = conn.prepareStatement(sql);
