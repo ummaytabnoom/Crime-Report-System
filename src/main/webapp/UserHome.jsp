@@ -50,7 +50,7 @@
 
         // Get all reported crimes from the PERMANENT_REPORTS table
         PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM PERMANENT_REPORTS ORDER BY CRIME_ID DESC");
+                "SELECT * FROM REPORTED_CRIMES ORDER BY REPORT_ID DESC");
         ResultSet crimesRs = ps.executeQuery();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -58,7 +58,7 @@
             Map<String, Object> crime = new HashMap<>();
             String hideIdentity = crimesRs.getString("HIDE_IDENTITY");
 
-            crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
+            crime.put("crimeId", crimesRs.getInt("REPORT_ID"));
             crime.put("userName", crimesRs.getString("USER_NAME"));
             crime.put("fullName", crimesRs.getString("FULL_NAME"));
             crime.put("category", crimesRs.getString("CATEGORY"));
@@ -80,7 +80,7 @@
 
             // Fetch reporter info
             PreparedStatement userStmt = conn.prepareStatement(
-                    "SELECT PROFILE_PICTURE, FULL_NAME, USER_NAME FROM REGISTERED_USERS WHERE ID=?");
+                    "SELECT PROFILE_PICTURE, FULL_NAME, USER_NAME FROM REGISTERED_USERS WHERE USER_NAME=?");
             userStmt.setString(1, crimesRs.getString("USER_NAME"));
             ResultSet userRs = userStmt.executeQuery();
 

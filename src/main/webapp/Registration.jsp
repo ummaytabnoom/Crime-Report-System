@@ -9,7 +9,7 @@
 String message = "";
 String registeredRole = ""; 
 String registeredId = ""; 
-
+boolean policeExists = false;
 if (ServletFileUpload.isMultipartContent(request)) {
     DiskFileItemFactory factory = new DiskFileItemFactory();
     ServletFileUpload upload = new ServletFileUpload(factory);
@@ -72,10 +72,13 @@ if (ServletFileUpload.isMultipartContent(request)) {
                 } else {
                     // Check if police ID exists in POLICE_INFO
                     PreparedStatement checkPolice = conn.prepareStatement("SELECT COUNT(*) FROM POLICE_INFO WHERE POLICE_ID = ?");
-                    checkPolice.setString(1, registeredId);
+                    checkPolice.setString(1, registeredId.trim().toUpperCase());
                     ResultSet rsPolice = checkPolice.executeQuery();
-                    boolean policeExists = false;
-                    if (rsPolice.next() && rsPolice.getInt(1) > 0) policeExists = true;
+                    
+                    if (rsPolice.next() && rsPolice.getInt(1) > 0){
+                    policeExists = true;
+                    System.out.println(rsPolice.getInt(1));
+                    }
                     rsPolice.close();
                     checkPolice.close();
 
