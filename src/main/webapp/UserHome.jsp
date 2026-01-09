@@ -48,7 +48,7 @@
         rs.close();
         stmt.close();
 
-        // Get all reported crimes from the PERMANENT_REPORTS table
+        // Get all reported crimes from the REPORTED_CRIMES table
         PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM REPORTED_CRIMES ORDER BY REPORT_ID DESC");
         ResultSet crimesRs = ps.executeQuery();

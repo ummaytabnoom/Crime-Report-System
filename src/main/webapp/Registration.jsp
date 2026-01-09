@@ -66,40 +66,41 @@ if (ServletFileUpload.isMultipartContent(request)) {
             conn.setAutoCommit(false);
 
             // ----------- POLICE ID VALIDATION -------------
-            if ("police".equalsIgnoreCase(registeredRole)) {
-                if (registeredId == null || registeredId.trim().isEmpty()) {
-                    message = "<p class='message error'>Police ID is required for police users.</p>";
-                } else {
-                    // Check if police ID exists in POLICE_INFO
-                    PreparedStatement checkPolice = conn.prepareStatement("SELECT COUNT(*) FROM POLICE_INFO WHERE POLICE_ID = ?");
-                    checkPolice.setString(1, registeredId.trim().toUpperCase());
-                    ResultSet rsPolice = checkPolice.executeQuery();
-                    
-                    if (rsPolice.next() && rsPolice.getInt(1) > 0){
-                    policeExists = true;
-                    System.out.println(rsPolice.getInt(1));
-                    }
-                    rsPolice.close();
-                    checkPolice.close();
+             
+           if ("police".equalsIgnoreCase(registeredRole)) {
+    if (registeredId == null || registeredId.trim().isEmpty()) {
+        message = "<p class='message error'>Police ID is required for police users.</p>";
+    } else {
+        String policeIdClean = registeredId.trim().toUpperCase();
+        System.out.println("Checking Police ID: '" + policeIdClean + "'");
 
-                    if (!policeExists) {
-                        message = "<p class='message error'>This Police ID doesn't exist. Registration cannot proceed.</p>";
-                    } else {
-                        // Check if Police ID already used in REGISTERED_USERS
-                        PreparedStatement usedPolice = conn.prepareStatement("SELECT COUNT(*) FROM REGISTERED_USERS WHERE POLICE_ID = ?");
-                        usedPolice.setString(1, registeredId);
-                        ResultSet rsUsed = usedPolice.executeQuery();
-                        boolean policeUsed = false;
-                        if (rsUsed.next() && rsUsed.getInt(1) > 0) policeUsed = true;
-                        rsUsed.close();
-                        usedPolice.close();
+        PreparedStatement checkPolice = conn.prepareStatement(
+            "SELECT POLICE_ID FROM POLICE_INFO WHERE UPPER(TRIM(POLICE_ID)) = ?"
+        );
+        checkPolice.setString(1, policeIdClean);
+        ResultSet rsPolice = checkPolice.executeQuery();
 
-                        if (policeUsed) {
-                            message = "<p class='message error'>This Police ID has already been registered. Registration cannot proceed.</p>";
-                        }
-                    }
-                }
+        if (rsPolice.next()) {
+            // exists, now check if already registered
+            PreparedStatement usedPolice = conn.prepareStatement(
+                "SELECT COUNT(*) FROM REGISTERED_USERS WHERE POLICE_ID = ?"
+            );
+            usedPolice.setString(1, policeIdClean);
+            ResultSet rsUsed = usedPolice.executeQuery();
+            if (rsUsed.next() && rsUsed.getInt(1) > 0) {
+                message = "<p class='message error'>This Police ID has already been registered.</p>";
             }
+            rsUsed.close();
+            usedPolice.close();
+        } else {
+            message = "<p class='message error'>This Police ID doesn't exist.</p>";
+        }
+
+        rsPolice.close();
+        checkPolice.close();
+    }
+}
+
 
             // Only continue registration if no police ID error
             if (message.isEmpty()) {

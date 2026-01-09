@@ -36,9 +36,9 @@
         rs.close();
         stmt.close();
 
-     // Get all reported crimes from the PERMANENT_REPORTS table
+     // Get all reported crimes from the REPORTED_CRIMES table
         PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM PERMANENT_REPORTS ORDER BY CRIME_ID DESC");
+                "SELECT * FROM REPORTED_CRIMES ORDER BY CRIME_ID DESC");
         ResultSet crimesRs = ps.executeQuery();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 

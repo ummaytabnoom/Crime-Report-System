@@ -41,9 +41,9 @@
                         selectStmt.setInt(1, crimeId);
                         ResultSet crimeRs = selectStmt.executeQuery();
                         if (crimeRs.next()) {
-                            // 2. Insert into PERMANENT_REPORTS
+                            // 2. Insert into REPORTED_CRIMES
                             PreparedStatement insertStmt = conn.prepareStatement(
-                                    "INSERT INTO PERMANENT_REPORTS (CRIME_ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, PROFILE_PICTURE, HIDE_IDENTITY, USER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                    "INSERT INTO REPORTED_CRIMES (CRIME_ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, PROFILE_PICTURE, HIDE_IDENTITY, USER_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                             
                             // Copy all column values
                             insertStmt.setInt(1, crimeRs.getInt("CRIME_ID"));

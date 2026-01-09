@@ -32,14 +32,14 @@
                 int crimeId = Integer.parseInt(crimeIdParam);
                 String sql = "";
                 if ("delete".equalsIgnoreCase(action)) {
-                    sql = "DELETE FROM PERMANENT_REPORTS WHERE CRIME_ID = ?";
+                    sql = "DELETE FROM REPORTED_CRIMES WHERE REPORT_ID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, crimeId);
                         ps.executeUpdate();
                     }
                     message = "Crime report deleted successfully.";
                 } else {
-                    sql = "UPDATE PERMANENT_REPORTS SET STATUS = ? WHERE CRIME_ID = ?";
+                    sql = "UPDATE REPORTED_CRIMES SET STATUS = ? WHERE REPORT_ID = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, action);
                         ps.setInt(2, crimeId);
@@ -88,11 +88,11 @@
         }
 
         // --- Fetch ALL crime reports with search functionality ---
-        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM PERMANENT_REPORTS");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM REPORTED_CRIMES");
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
             sqlBuilder.append(" WHERE LOWER(USER_NAME) LIKE ? OR LOWER(FULL_NAME) LIKE ?");
         }
-        sqlBuilder.append(" ORDER BY CRIME_ID DESC");
+        sqlBuilder.append(" ORDER BY REPORT_ID DESC");
 
         try (PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
             int paramIndex = 1;
@@ -107,7 +107,7 @@
                     String reporterUsername = crimesRs.getString("USER_NAME");
                     String hideIdentity = crimesRs.getString("HIDE_IDENTITY");
 
-                    crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
+                    crime.put("crimeId", crimesRs.getInt("REPORT_ID"));
                     crime.put("userName", reporterUsername);
                     crime.put("category", crimesRs.getString("CATEGORY"));
                     crime.put("description", crimesRs.getString("DESCRIPTION"));
@@ -462,10 +462,9 @@
         <span class="user-name"><%= currentUser %></span>
     </div>
     <div class="top-right-buttons">
-        <a href="ReportSubForPolice.jsp">Report A Crime</a>
-        <a href="MyReportsForPolice.jsp">My Reports</a>
+       
         <a href="PoliceHome.jsp">Police Dashboard</a>
-        <a href="UserHomeForPolice.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">User Dashboard</a>
     </div>
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
