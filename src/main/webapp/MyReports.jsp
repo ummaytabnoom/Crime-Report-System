@@ -140,7 +140,8 @@
         String displayName = isAnonymous ? "Anonymous" : (String) crime.get("fullName");
         String profileImgSrc = isAnonymous ? "images/default.png" : (imageBytes != null ? "data:image/jpeg;base64,"+Base64.getEncoder().encodeToString(imageBytes) : "images/default.png");
 %>
-<div class="crime-container" id="crime<%= crimeId %>">
+<div class="crime-container" id="crime<%= crime.get("crimeId") %>">  
+
     <!-- Edit Button -->
     <div style="position:absolute; top:10px; right:10px;">
         <button class="edit-btn" onclick="toggleEditMenu('editMenu<%= crimeId %>')">Edit ▼</button>

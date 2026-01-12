@@ -50,7 +50,7 @@
 
         // Get all reported crimes from the REPORTED_CRIMES table
         PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM REPORTED_CRIMES ORDER BY CRIME_ID DESC");
+                "SELECT * FROM REPORTED_CRIMES ORDER BY REPORT_ID DESC");
         ResultSet crimesRs = ps.executeQuery();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -58,7 +58,7 @@
             Map<String, Object> crime = new HashMap<>();
             String hideIdentity = crimesRs.getString("HIDE_IDENTITY");
 
-            crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
+            crime.put("crimeId", crimesRs.getInt("REPORT_ID"));
             crime.put("userName", crimesRs.getString("USER_NAME"));
             crime.put("fullName", crimesRs.getString("FULL_NAME"));
             crime.put("category", crimesRs.getString("CATEGORY"));
