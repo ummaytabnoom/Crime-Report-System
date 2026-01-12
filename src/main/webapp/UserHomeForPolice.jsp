@@ -4,8 +4,6 @@
 <%@ page import="java.util.List, java.util.Map, java.util.ArrayList, java.util.HashMap" %>
 <%
     String currentUser = (String) session.getAttribute("username");
-    Integer currentUserId = (Integer) session.getAttribute("userId");
-
     byte[] imageBytes = null;
     List<Map<String,Object>> crimeList = new ArrayList<>();
 
@@ -16,7 +14,7 @@
 
         // Get current user profile picture
         PreparedStatement stmt = conn.prepareStatement(
-                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?");
+                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME=?");
         stmt.setString(1, currentUser);
         ResultSet rs = stmt.executeQuery();
         if (rs.next()) {
@@ -70,7 +68,7 @@
 
             // Fetch reporter info
             PreparedStatement userStmt = conn.prepareStatement(
-                    "SELECT PROFILE_PICTURE, MOBILE, FULL_NAME, USER_NAME FROM REGISTERED_USERS WHERE ID=?");
+                    "SELECT PROFILE_PICTURE, MOBILE, FULL_NAME, USER_NAME FROM REGISTERED_USERS WHERE USER_NAME=?");
             userStmt.setString(1, crimesRs.getString("USER_NAME"));
             ResultSet userRs = userStmt.executeQuery();
 
@@ -202,13 +200,13 @@
             margin-right: 15px;
             border: 2px solid #007BFF;
         }
-	.crime-image {
-	    width: 600px;   /* exact width */
-	    height: 450px;  /* exact height */
-	    display: block;
-	    margin-top: 15px;
-	    border-radius: 8px;
-	}
+        .crime-image {
+            max-width: 400px;
+            max-height: 300px;
+            display: block;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
         .top-right-buttons {
             position: absolute;
             top: 30px;

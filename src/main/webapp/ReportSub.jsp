@@ -5,7 +5,8 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*" %>
 
 <%
-    // Set encoding
+//Load current profile picture
+
     request.setCharacterEncoding("UTF-8");
     boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 
@@ -14,24 +15,18 @@
     String message = "";
     boolean reportSubmitted = false;
 
-    // Variables to hold user info
-    int userId = 0;
-    String fullName = "";
-
-    // Fetch profile picture and user details
+    //FOR FETCHING PROFILE_PICTURE
     if (currentUser != null) {
         try {
             Class.forName("oracle.jdbc.OracleDriver");
             Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
 
-            // Fetch profile picture
-            String picSql = "SELECT PROFILE_PICTURE, ID, FULL_NAME FROM REGISTERED_USERS WHERE USER_NAME = ?";
-            PreparedStatement picStmt = conn.prepareStatement(picSql);
-            picStmt.setString(1, currentUser);
-            ResultSet rs = picStmt.executeQuery();
+            String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, currentUser);
+            ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                // Fetch profile picture
                 Blob blob = rs.getBlob("PROFILE_PICTURE");
                 if (blob != null) {
                     InputStream is = blob.getBinaryStream();
@@ -44,25 +39,23 @@
                     imageBytes = os.toByteArray();
                     is.close();
                 }
-
-                // Fetch user ID and full name
-                userId = rs.getInt("ID");
-                fullName = rs.getString("FULL_NAME");
             }
             rs.close();
-            picStmt.close();
+            stmt.close();
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            message = "Error loading user info: " + e.getMessage();
+            message = "Error loading profile picture: " + e.getMessage();
         }
     }
 
-    // Handle form submission
+
     if (isMultipart) {
         DiskFileItemFactory factory = new DiskFileItemFactory();
         ServletFileUpload upload = new ServletFileUpload(factory);
 
+        String userName = (String) session.getAttribute("username");
+        String fullName = "";
         String zilla = "";
         String upazilla = "";
         String policeStation = "";
@@ -73,8 +66,9 @@
         String category = "";
         String description = "";
         String hideIdentity = "NO"; // default value
-        byte[] demoPicBytes = null;
 
+        byte[] demoPicBytes = null;
+        
         try {
             List<FileItem> formItems = upload.parseRequest(request);
 
@@ -84,6 +78,7 @@
                     String fieldValue = item.getString("UTF-8");
 
                     switch (fieldName) {
+                        case "fullName": fullName = fieldValue; break;
                         case "zilla": zilla = fieldValue; break;
                         case "upazilla": upazilla = fieldValue; break;
                         case "policeStation": policeStation = fieldValue; break;
@@ -102,35 +97,34 @@
                 }
             }
 
-            // Insert into REPORTED_CRIMES
             Class.forName("oracle.jdbc.driver.OracleDriver");
             Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
             conn.setAutoCommit(false);
 
-            String sql = "INSERT INTO REPORTED_CRIMES " +
-                         "(USER_ID, USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO REPORTED_CRIMES (USER_NAME, FULL_NAME, ZILLA, UPAZILLA, POLICE_STATION, AREA, ROAD_NAME, ROAD_NO, DATE_OF_INCIDENT, CATEGORY, DESCRIPTION, STATUS, DEMO_PICTURE, HIDE_IDENTITY) " +
+                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, ?, ?, ?)";
 
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, userId);
-            stmt.setString(2, currentUser);
-            stmt.setString(3, fullName);
-            stmt.setString(4, zilla);
-            stmt.setString(5, upazilla);
-            stmt.setString(6, policeStation);
-            stmt.setString(7, area);
-            stmt.setString(8, roadName);
-            stmt.setString(9, roadNo);
-            stmt.setString(10, date);
-            stmt.setString(11, category);
-            stmt.setString(12, description);
-            stmt.setString(13, "Pending");
+
+            stmt.setString(1, userName);
+            stmt.setString(2, fullName);
+            stmt.setString(3, zilla);
+            stmt.setString(4, upazilla);
+            stmt.setString(5, policeStation);
+            stmt.setString(6, area);
+            stmt.setString(7, roadName);
+            stmt.setString(8, roadNo);
+            stmt.setString(9, date);
+            stmt.setString(10, category);
+            stmt.setString(11, description);
+            stmt.setString(12, "Pending");
+            
             if (demoPicBytes != null) {
-                stmt.setBytes(14, demoPicBytes);
+                stmt.setBytes(13, demoPicBytes);
             } else {
-                stmt.setNull(14, Types.BLOB);
+                stmt.setNull(13, Types.BLOB);
             }
-            stmt.setString(15, hideIdentity);
+            stmt.setString(14, hideIdentity);
 
             int row = stmt.executeUpdate();
             conn.commit();
@@ -144,6 +138,7 @@
 
             stmt.close();
             conn.close();
+
         } catch (Exception ex) {
             ex.printStackTrace();
             message = "<p class='message error'>Error: " + ex.getMessage() + "</p>";
@@ -154,6 +149,7 @@
         response.setHeader("Refresh", "3; URL=MyReports.jsp");
     }
 %>
+
 
 <!DOCTYPE html>
 <html>
@@ -169,33 +165,200 @@
             background-position: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .navbar { background-color: #FF8C00; color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar-title { font-size: 22px; font-weight: bold; }
-        .menu-icon { font-size: 26px; cursor: pointer; }
-        .dropdown { position: absolute; top: 60px; right: 20px; background-color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border-radius: 6px; display: none; flex-direction: column; min-width: 180px; z-index: 999; }
-        .dropdown a { padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; display: block; }
-        .dropdown a:hover { background-color: #f2f2f2; }
-        .show { display: flex; }
-        .top-right-buttons { position: absolute; top: 20px; left: 80%; transform: translateX(-50%); display: flex; gap: 20px; }
-        .top-right-buttons a { padding: 10px 15px; background-color: #005F5F; color: white; text-decoration: none; border-radius: 5px; transition: all 0.3s ease; }
-        .top-right-buttons a:hover { background-color: #008C8C; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .container { max-width: 750px; margin: 20px auto 10px; background-color: rgba(255,255,255,0.9); padding: 20px 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        h2 { text-align: center; color: #005F5F; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        td { padding: 6px 8px; vertical-align: top; }
-        td:first-child { width: 20%; font-weight: bold; color: #333; }
-        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-        input[type="file"] { padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; background-color: white; cursor: pointer; }
-        textarea { resize: vertical; }
-        input[type="submit"] { display: block; margin: 25px auto 0; padding: 12px 25px; background-color: #FF8C00; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        input[type="submit"]:hover { background-color: #e67300; }
-        .message { text-align: center; margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 5px; }
-        .message.success { color: green; background-color: #d4edda; border: 1px solid #c3e6cb; }
-        .message.error { color: red; background-color: #f8d7da; border: 1px solid #f5c6cb; }
-        .user-info { display: inline-flex; align-items: center; gap: 10px; margin-left: 5px; vertical-align: middle; }
-        .user-pic { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
-        .user-name { font-weight: bold; color: white; font-size: 25px; }
-        .error-message { color: #d9534f; font-size: 0.9em; margin-top: 10px; margin-bottom: 10px; display: none; }
+
+        .navbar {
+            background-color: #FF8C00;
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .menu-icon {
+            font-size: 26px;
+            cursor: pointer;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            display: none;
+            flex-direction: column;
+            min-width: 180px;
+            z-index: 999;
+        }
+
+        .dropdown a {
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            display: block;
+        }
+
+        .dropdown a:hover {
+            background-color: #f2f2f2;
+        }
+
+        .show {
+            display: flex;
+        }
+
+        .top-right-buttons {
+            position: absolute;
+            top: 20px;
+            left: 80%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+
+        .top-right-buttons a {
+            padding: 10px 15px;
+            background-color: #005F5F;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .top-right-buttons a:hover {
+            background-color: #008C8C;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 20px auto 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            color: #005F5F;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        td {
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        td:first-child {
+            width: 20%;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        input[type="submit"] {
+            display: block;
+            margin: 25px auto 0;
+            padding: 12px 25px;
+            background-color: #FF8C00;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #e67300;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .message.success {
+            color: green;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            color: red;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .user-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .user-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: white;
+            font-size: 25px;
+        }
+        
+        .error-message {
+            color: #d9534f;
+            font-size: 0.9em;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -227,9 +390,7 @@
         <%= message %>
         <form action="ReportSub.jsp" method="post" enctype="multipart/form-data">
             <table>
-                <!-- Full Name fetched automatically -->
-                <input type="hidden" name="fullName" value="<%= fullName %>">
-
+                <tr><td>Full Name:</td><td><input type="text" name="fullName" required></td></tr>
                 <tr><td>Zilla:</td><td><input type="text" name="zilla" required></td></tr>
                 <tr><td>Upazilla:</td><td><input type="text" name="upazilla" required></td></tr>
                 <tr><td>Police Station:</td><td><input type="text" name="policeStation" required></td></tr>
@@ -264,7 +425,7 @@
             <input type="submit" value="Submit Report">
         </form>
     </div>
-
+    
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const menuIcon = document.querySelector('.menu-icon');
@@ -281,24 +442,23 @@
                     }
                 }
             });
-
-            // Sets the max date to today
+            
+            // Sets the max date to today on page load
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             const maxDate = `${yyyy}-${mm}-${dd}`;
             document.getElementById("incidentDate").setAttribute("max", maxDate);
-        });
 
+        });
+        
+        // Function to validate the incident date
         function validateIncidentDate() {
             const incidentDateInput = document.getElementById("incidentDate");
             const incidentDateError = document.getElementById("incident-date-error");
             const selectedDate = new Date(incidentDateInput.value);
             const today = new Date();
-            today.setHours(0,0,0,0);
-            selectedDate.setHours(0,0,0,0);
-
 
             if (selectedDate > today) {
                 incidentDateInput.setCustomValidity("Invalid date.");

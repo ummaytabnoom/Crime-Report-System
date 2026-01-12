@@ -86,14 +86,8 @@
         h2 { text-align:center; margin:20px 0; color:black; }
         .crime-container { border:1px solid #ccc; padding:15px; margin:25px auto; border-radius:10px; background-color:#f2f2f2; color:black; width:80%; max-width:800px; box-shadow:0 0 10px rgba(0,0,0,0.2); position:relative; }
         .profile-image { width:60px; height:60px; object-fit:cover; border-radius:50%; float:left; margin-right:15px; border:2px solid #007BFF; }
-       	.crime-image {
-	    width: 600px;   /* exact width */
-	    height: 450px;  /* exact height */
-	    display: block;
-	    margin-top: 15px;
-	    border-radius: 8px;
-	}
-	.top-right-buttons { position:absolute; top:30px; left:60%; transform:translateX(0%); }
+        .crime-image { max-width:400px; max-height:300px; display:block; margin-top:15px; border-radius:8px; }
+        .top-right-buttons { position:absolute; top:30px; left:60%; transform:translateX(0%); }
         .top-right-buttons a { background-color:#005F5F; color:white; padding:8px 20px; text-decoration:none; border-radius:5px; margin-right:10px; }
         .search-bar { width:60%; max-width:500px; margin:0 auto 20px auto; display:block; padding:10px 15px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
         .edit-dropdown { display:none; position:absolute; right:0; top:35px; background-color:#fff; color:#000; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.2); min-width:160px; z-index:10; }
