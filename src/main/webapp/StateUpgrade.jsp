@@ -462,14 +462,14 @@
         <span class="user-name"><%= currentUser %></span>
     </div>
     <div class="top-right-buttons">
-        <a href="ReportSubForPolice.jsp">Report A Crime</a>
-        <a href="MyReportsForPolice.jsp">My Reports</a>
+        <a href="ReportSub.jsp">Report A Crime</a>
+        <a href="MyReports.jsp">My Reports</a>
         <a href="PoliceHome.jsp">Police Dashboard</a>
-        <a href="UserHomeForPolice.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">User Dashboard</a>
     </div>
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
-        <a href="SettingsForPolice.jsp">Settings</a>
+        <a href="Settings.jsp">Settings</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>

@@ -129,7 +129,7 @@
 
     <!-- Main Content -->
     <div class="content">
-        <h1>Let’s Build Safer Roads!</h1>
+        <h1>Let’s Build Safer Journeys!</h1>
 <p>Share your road experiences — your voice helps us take action and protect our community.</p>
 
 

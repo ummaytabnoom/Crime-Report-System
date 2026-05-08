@@ -2,6 +2,8 @@
 <%@ page import="java.sql.*, java.io.*, java.util.*, java.util.Base64" %>
 <%
     String currentUser = (String) session.getAttribute("username");
+  String userRole = (String) session.getAttribute("userRole");
+  boolean isAdmin = "admin".equals(userRole);
     byte[] imageBytes = null;
     List<Map<String, Object>> crimeList = new ArrayList<>();
 
@@ -123,8 +125,10 @@
     </div>
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
+    <% if (isAdmin == true) { %>
+        <a href="AdminsHome.jsp">Admin Penel</a>
+        <% } %>
         <a href="Settings.jsp">Settings</a>
-        <a href="Notifications.jsp">Notifications</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>

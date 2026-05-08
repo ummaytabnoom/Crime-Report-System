@@ -257,6 +257,17 @@
         .toggle-icon:hover {
             color: #FF8C00;
         }
+
+.preview-img {
+    display: block;
+    margin: 15px auto;
+    width: 25%;           /* responsive size */
+    max-width: 100px;     /* never too big */
+    aspect-ratio: 1/1;    /* keeps it square */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #FF8C00;
+}
         input[type="submit"] {
             width: 100%;
             padding: 12px;
@@ -310,50 +321,36 @@
 </div>
 
 <div class="container">
-    <h2>Change Password</h2>
-
     <% if (!message.isEmpty()) { %>
         <div class="message"><%= message %></div>
     <% } %>
 
-    <form method="post">
-        <div class="input-wrapper">
-            <label for="oldPassword">Present Password:</label>
-            <input type="password" id="oldPassword" name="oldPassword" required />
-            <i
-                id="toggleIconOld"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('oldPassword', 'toggleIconOld')"
-                title="Show/Hide Present Password"
-            ></i>
-        </div>
+    
+    <h2>Change Profile Picture</h2>
 
-        <div class="input-wrapper">
-            <label for="newPassword">New Password:</label>
-            <input type="password" id="newPassword" name="newPassword" required />
-            <i
-                id="toggleIconNew"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('newPassword', 'toggleIconNew')"
-                title="Show/Hide New Password"
-            ></i>
-        </div>
+    <div class="profile-section">
 
-        <div class="input-wrapper">
-            <label for="confirmPassword">Rewrite Password:</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required />
-            <i
-                id="toggleIconConfirm"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('confirmPassword', 'toggleIconConfirm')"
-                title="Show/Hide Rewritten Password"
-            ></i>
+    <% if (!message.isEmpty()) { %>
+        <div class="message <%= message.contains("Error") || message.contains("Failed") ? "error" : "" %>">
+            <%= message %>
         </div>
+    <% } %>
 
-        <input type="submit" value="Change Password" />
+    <% if (imageBytes != null) { %>
+        <img class="preview-img" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" />
+    <% } else { %>
+        <p class="message">No profile picture uploaded.</p>
+    <% } %>
+
+    <form method="post" enctype="multipart/form-data">
+        <label>Select New Profile Picture:</label>
+        <input type="file" name="profilePic" accept="image/*" required />
+        <input type="submit" value="Upload">
     </form>
+
     <div class="back-link">
         <a href="Settings.jsp">Back to Settings</a>
+    </div>
     </div>
 </div>
 

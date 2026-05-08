@@ -10,6 +10,12 @@
     boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 
     String currentUser = (String) session.getAttribute("username");
+
+String userRole = (String) session.getAttribute("userRole");
+
+boolean isAdmin = "admin".equals(userRole);
+boolean isPolice = "police".equals(userRole);
+
     byte[] imageBytes = null;
     String message = "";
     boolean reportSubmitted = false;
@@ -169,14 +175,53 @@
             background-position: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .navbar { background-color: #FF8C00; color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar-title { font-size: 22px; font-weight: bold; }
-        .menu-icon { font-size: 26px; cursor: pointer; }
-        .dropdown { position: absolute; top: 60px; right: 20px; background-color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border-radius: 6px; display: none; flex-direction: column; min-width: 180px; z-index: 999; }
-        .dropdown a { padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; display: block; }
+  .navbar {
+            background-color: #FF8C00;
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+/* TOGGLE MENU ICON */
+.menu-icon{
+    font-size: 30px;
+    cursor: pointer;
+    color: white;
+
+    position: absolute;
+    top: 18px;
+    right: 20px;
+
+    z-index: 1000;
+}
+
+/* DROPDOWN MENU */
+.dropdown{
+    position: absolute;
+    top: 60px;
+    right: 10px;
+
+    background-color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-radius: 6px;
+
+    display: none;
+    flex-direction: column;
+
+    min-width: 180px;
+    z-index: 999;
+}
+ .dropdown a { padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; display: block; }
         .dropdown a:hover { background-color: #f2f2f2; }
         .show { display: flex; }
-        .top-right-buttons { position: absolute; top: 20px; left: 80%; transform: translateX(-50%); display: flex; gap: 20px; }
+        .top-right-buttons { position: absolute; top: 20px; left:80%; transform: translateX(-50%); display: flex; gap: 20px; }
         .top-right-buttons a { padding: 10px 15px; background-color: #005F5F; color: white; text-decoration: none; border-radius: 5px; transition: all 0.3s ease; }
         .top-right-buttons a:hover { background-color: #008C8C; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .container { max-width: 750px; margin: 20px auto 10px; background-color: rgba(255,255,255,0.9); padding: 20px 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
@@ -212,8 +257,13 @@
         </div>
         <div class="menu-icon" onclick="toggleMenu()">☰</div>
         <div id="dropdownMenu" class="dropdown">
-            <a href="Settings.jsp">Settings</a>
-            <a href="Logout.jsp">Logout</a>
+        
+         <% if(isAdmin){ %>
+    <a href="AdminsHome.jsp">Admin Panel</a>
+<% } %>
+
+<a href="Settings.jsp">Settings</a>
+<a href="Logout.jsp">Logout</a>
         </div>
     </div>
 

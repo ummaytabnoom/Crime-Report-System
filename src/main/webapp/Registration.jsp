@@ -168,9 +168,9 @@ if (ServletFileUpload.isMultipartContent(request)) {
 
                             // Redirect based on role
                             if ("admin".equalsIgnoreCase(registeredRole)) {
-                                response.sendRedirect("UserHomeForAdmin.jsp");
+                                response.sendRedirect("UserHome.jsp");
                             } else if ("police".equalsIgnoreCase(registeredRole)) {
-                                response.sendRedirect("UserHomeForPolice.jsp");
+                                response.sendRedirect("UserHome.jsp");
                             } else {
                                 response.sendRedirect("UserHome.jsp");
                             }

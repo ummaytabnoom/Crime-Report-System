@@ -2,6 +2,11 @@
 <%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
 <%
     String currentUser = (String) session.getAttribute("username");
+String userRole = (String) session.getAttribute("userRole");
+
+boolean isAdmin = "admin".equals(userRole);
+boolean isPolice = "police".equals(userRole);
+
     byte[] imageBytes = null;
     try {
         Class.forName("oracle.jdbc.OracleDriver");
@@ -214,6 +219,9 @@
     </div>
         <button class="menu-icon" onclick="toggleMenu()">☰</button>
         <div id="dropdownMenu" class="dropdown">
+         <% if(isAdmin){ %>
+            <a href="AdminsHome.jsp">Admin Panel</a>
+        <% } %>
             <a href="Settings.jsp">Settings</a>
             <a href="Logout.jsp">Logout</a>
         </div>

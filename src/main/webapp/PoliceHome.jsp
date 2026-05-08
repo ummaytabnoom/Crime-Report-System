@@ -178,13 +178,13 @@
 
         <!-- Dropdown menu -->
         <div id="dropdownMenu" class="dropdown">
-            <a href="SettingsForPolice.jsp">Settings</a>
+            <a href="Settings.jsp">Settings</a>
             <a href="Logout.jsp">Logout</a>
         </div>
     </div>
     
     <div class="top-right-buttons">
-        <a href="UserHomeForPolice.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">User Dashboard</a>
         
     </div>
 

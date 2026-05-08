@@ -4,9 +4,22 @@
 <%
     // --- Get current user info for navbar ---
     Integer currentUserId = (Integer) session.getAttribute("userId"); // safer as Integer
+    String userRole = (String) session.getAttribute("userRole");
+    boolean isAdmin = "admin".equals(userRole);
     String currentUserName = "";
     byte[] imageBytes = null;
     String message = "";
+    
+    
+// ONLY ADMIN 
+if (currentUserId == null) {
+    response.sendRedirect("Login.jsp");
+    return;
+}
+if (!isAdmin) {
+	response.sendRedirect("MainHome.jsp");
+    return;
+}
 
     if (currentUserId != null) {
         try {
@@ -140,13 +153,12 @@
             display: flex;
         }
 
-        .top-right-buttons {
+         .top-right-buttons {
             position: absolute;
             top: 30px;
-            left: 58%;
+            left: 67%;
             transform: translateX(0%);
         }
-
         .top-right-buttons a {
             background-color: #005F5F;
             color: white;
@@ -154,6 +166,13 @@
             text-decoration: none;
             border-radius: 5px;
             margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        .top-right-buttons a:hover {
+            background-color: #008C8C;
+            color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .content-box {
@@ -290,18 +309,19 @@
             <% } else { %>
                 <img src="images/default_profile.png" alt="Default Profile Picture" class="user-pic">
             <% } %>
-            <span class="user-name">Hello, <%= currentUserName %></span>
+            <span class="user-name"> <%= currentUserName %></span>
         </div>
     </div>
         
     <div class="top-right-buttons">
-        <a href="AdminsHome.jsp">Admin Dashboard</a>
-        <a href="ReportMan.jsp">Crime Report Management</a>
-        <a href="UserHomeForAdmin.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">User Dashboard</a>
+        <a href="MyReports.jsp">My Reports</a>
+        <a href="ReportSub.jsp">Report Crime</a>
     </div>
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
-        <a href="SettingsForAdmin.jsp">Settings</a>
+        <a href="AdminsHome.jsp">Admin Penel</a>
+        <a href="Settings.jsp">Settings</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>
@@ -426,19 +446,53 @@
 </div>
 
 <script>
-    function toggleMenu() {
-        var menu = document.getElementById("dropdownMenu");
-        menu.classList.toggle("show");
+function showUserInfo(fullName, userName, mobile, profileImg) {
+    const imgEl = document.getElementById("modalProfileImg");
+
+    if(profileImg && profileImg !== "") {
+        imgEl.src = "data:image/jpeg;base64," + profileImg;
+        imgEl.style.display = "block";
+    } else {
+        imgEl.src = "images/default.png";
+        imgEl.style.display = "block";
     }
 
-    window.onclick = function(event) {
-        if (!event.target.matches('.menu-icon')) {
-            var dropdowns = document.getElementsByClassName("dropdown");
-            for (var i = 0; i < dropdowns.length; i++) {
-                dropdowns[i].classList.remove("show");
-            }
+    document.getElementById("modalFullName").innerText = "Full Name: " + fullName;
+    document.getElementById("modalUsername").innerText = "Username: " + userName;
+    document.getElementById("modalMobile").innerText = "Mobile No: " + mobile;
+
+    document.getElementById("userModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("userModal").style.display = "none";
+}
+
+
+function toggleMenu() {
+    document.getElementById("dropdownMenu").classList.toggle("show");
+}
+
+
+function filterCrimes() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const containers = document.getElementsByClassName("crime-container");
+
+    for (let i = 0; i < containers.length; i++) {
+        const text = containers[i].innerText.toLowerCase();
+        containers[i].style.display = text.includes(input) ? "block" : "none";
+    }
+}
+
+
+window.onclick = function(event) {
+    if (!event.target.matches('.menu-icon')) {
+        let dropdown = document.getElementById("dropdownMenu");
+        if (dropdown.classList.contains("show")) {
+            dropdown.classList.remove("show");
         }
     }
+}
 </script>
 
 </body>

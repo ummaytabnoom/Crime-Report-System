@@ -268,9 +268,9 @@ button[type="submit"] {
 
                         String redirectPage = "";
                         if ("admin".equalsIgnoreCase(role)) {
-                            redirectPage = "UserHomeForAdmin.jsp";
+                            redirectPage = "UserHome.jsp";
                         } else if ("police".equalsIgnoreCase(role)) {
-                            redirectPage = "UserHomeForPolice.jsp";
+                            redirectPage = "UserHome.jsp";
                         } else if ("public".equalsIgnoreCase(role)) {
                             redirectPage = "UserHome.jsp";
                         }

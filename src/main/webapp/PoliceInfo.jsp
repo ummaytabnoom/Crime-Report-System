@@ -195,7 +195,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 <div class="navbar">
 	<div class="top-right-buttons">
         <a href="AdminsHome.jsp">Admin Dashboard</a>
-        <a href="UserHomeForAdmin.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">User Dashboard</a>
     </div>
 
     <div class="user-info">
@@ -209,7 +209,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
-        <a href="SettingsForAdmin.jsp">Settings</a>
+        <a href="Settings.jsp">Settings</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>
