@@ -8,121 +8,60 @@
 
 <%
     String message = "";
-    // Get user data from session
+    // 1. Get user data from session
     Integer currentUserId = (Integer) session.getAttribute("userId");
     String currentUserName = (String) session.getAttribute("username");
 
     if (currentUserId == null || currentUserName == null) {
-        response.sendRedirect("Login.jsp"); // Redirect to your Login page
-        return; // Stop further execution
+        response.sendRedirect("Login.jsp");
+        return;
     }
 
+    // 2. Handle File Upload
+    if (request.getMethod().equalsIgnoreCase("POST") && 
+        request.getContentType() != null && 
+        request.getContentType().startsWith("multipart/form-data")) {
+        
+        try {
+            org.apache.commons.fileupload.servlet.ServletFileUpload upload = new org.apache.commons.fileupload.servlet.ServletFileUpload(new org.apache.commons.fileupload.disk.DiskFileItemFactory());
+            java.util.List<org.apache.commons.fileupload.FileItem> items = upload.parseRequest(request);
+            
+            for (org.apache.commons.fileupload.FileItem item : items) {
+                if (!item.isFormField() && item.getFieldName().equals("profilePic")) {
+                    byte[] fileBytes = item.get();
+                    
+                    try (Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+                         PreparedStatement stmt = conn.prepareStatement("UPDATE REGISTERED_USERS SET PROFILE_PICTURE = ? WHERE ID = ?")) {
+                        stmt.setBytes(1, fileBytes);
+                        stmt.setInt(2, currentUserId);
+                        stmt.executeUpdate();
+                        message = "Profile picture updated successfully!";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            message = "Error uploading file: " + e.getMessage();
+        }
+    }
+
+    // 3. Fetch Profile Picture
     byte[] imageBytes = null;
-    
-    // --- 1. FETCH PROFILE PICTURE (Runs on every page load) ---
     try {
         Class.forName("oracle.jdbc.OracleDriver");
-        
-        // Using try-with-resources for automatic resource closing
-        try (Connection conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
-             PreparedStatement stmt = conn.prepareStatement(
-                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?")) {
-            
+        try (Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+             PreparedStatement stmt = conn.prepareStatement("SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?")) {
             stmt.setInt(1, currentUserId);
-            
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    Blob blob = rs.getBlob("PROFILE_PICTURE");
+                    java.sql.Blob blob = rs.getBlob("PROFILE_PICTURE");
                     if (blob != null) {
-                        try (InputStream is = blob.getBinaryStream();
-                             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                            
-                            byte[] buffer = new byte[1024];
-                            int bytesRead;
-                            while ((bytesRead = is.read(buffer)) != -1) {
-                                os.write(buffer, 0, bytesRead);
-                            }
-                            imageBytes = os.toByteArray();
-                        }
+                        imageBytes = blob.getBytes(1, (int) blob.length());
                     }
                 }
             }
         }
     } catch (Exception e) {
-        // Log error but allow page to load without a profile picture
-        System.out.println("Error fetching profile picture: " + e.getMessage());
-    }
-
-
-    // --- 2. HANDLE FORM SUBMISSION (Password Change) ---
-    String oldPassword = request.getParameter("oldPassword");
-    String newPassword = request.getParameter("newPassword");
-    String confirmPassword = request.getParameter("confirmPassword");
-    
-    // Check if the form was actually submitted (parameters are not null)
-    if (oldPassword != null && newPassword != null && confirmPassword != null) {
-
-        if (!newPassword.equals(confirmPassword)) {
-            message = "New password and rewrite password do not match.";
-        } else {
-            try {
-                Class.forName("oracle.jdbc.OracleDriver");
-                
-                // Using a separate try-with-resources for the update logic
-                try (Connection conn = DriverManager.getConnection(
-                    "jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345")) {
-
-                    // A. HASH the user's OLD password input for verification
-                    String hashedOldPasswordInput = PasswordUtil.hashPassword(oldPassword);
-                    
-                    String checkSql = "SELECT PASSWORD FROM REGISTERED_USERS WHERE ID = ?";
-                    try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
-                        checkStmt.setInt(1, currentUserId);
-                        
-                        try (ResultSet rs = checkStmt.executeQuery()) {
-
-                            if (rs.next()) {
-                                String dbHashedPassword = rs.getString("PASSWORD");
-
-                                // B. COMPARE the hashed user input with the database hash
-                                if (dbHashedPassword.equals(hashedOldPasswordInput)) {
-                                    
-                                    // C. HASH the NEW password before storing it
-                                    String hashedNewPassword = PasswordUtil.hashPassword(newPassword);
-                                    
-                                    // Step B: Update New Password
-                                    String updateSql = "UPDATE REGISTERED_USERS SET PASSWORD = ? WHERE ID = ?";
-                                    try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                                        updateStmt.setString(1, hashedNewPassword); // Store the HASH
-                                        updateStmt.setInt(2, currentUserId);
-
-                                        int rowsUpdated = updateStmt.executeUpdate();
-
-                                        if (rowsUpdated > 0) {
-                                            // Redirect after success 
-                                            response.sendRedirect("Settings.jsp?msg=password_updated");
-                                            return; 
-                                        } else {
-                                            message = "Error updating password.";
-                                        }
-                                    }
-
-                                } else {
-                                    message = "Present password is incorrect.";
-                                }
-                            } else {
-                                message = "User not found.";
-                            }
-                        }
-                    }
-                } // Connection conn closed automatically
-
-            } catch (Exception e) {
-                message = "An error occurred during password update: " + e.getMessage();
-                System.out.println("Password Change Error: " + e.getMessage());
-            }
-        }
+        System.out.println("Error fetching picture: " + e.getMessage());
     }
 %>
 
@@ -330,23 +269,18 @@
 
     <div class="profile-section">
 
-    <% if (!message.isEmpty()) { %>
-        <div class="message <%= message.contains("Error") || message.contains("Failed") ? "error" : "" %>">
-            <%= message %>
-        </div>
-    <% } %>
-
     <% if (imageBytes != null) { %>
-        <img class="preview-img" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" />
-    <% } else { %>
-        <p class="message">No profile picture uploaded.</p>
-    <% } %>
+            <img id="preview" class="preview-img" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" />
+        <% } else { %>
+            <img id="preview" class="preview-img" src="images/default.png" />
+        <% } %>
 
-    <form method="post" enctype="multipart/form-data">
-        <label>Select New Profile Picture:</label>
-        <input type="file" name="profilePic" accept="image/*" required />
-        <input type="submit" value="Upload">
-    </form>
+        <form method="post" enctype="multipart/form-data">
+            <label>Select New Profile Picture:</label>
+            <input type="file" name="profilePic" accept="image/*" required onchange="previewImage(event)" />
+            <br><br>
+            <input type="submit" value="Upload">
+        </form>
 
     <div class="back-link">
         <a href="Settings.jsp">Back to Settings</a>

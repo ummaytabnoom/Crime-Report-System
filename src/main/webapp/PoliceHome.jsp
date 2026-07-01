@@ -184,7 +184,7 @@
     </div>
     
     <div class="top-right-buttons">
-        <a href="UserHome.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">Dashboard</a>
         
     </div>
 
@@ -197,6 +197,8 @@
     <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
     <a href="StateUpgrade.jsp" class="action-button">Upgrade Report Status</a>
     <a href="AdminInfo.jsp" class="action-button">All Admin Information</a>
+    
+    <a href="PoliceInfo.jsp" class="action-button">All Police Information</a>
 </div>
     
     <!-- JavaScript -->

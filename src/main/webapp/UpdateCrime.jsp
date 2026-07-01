@@ -75,7 +75,7 @@
                                   crimesRs.getString("ROAD_NO");
             crime.put("fullLocation", fullLocation);
 
-            byte[] demoBytes = crimesRs.getBytes("DEMO_PICTURE");
+            byte[] demoBytes = crimesRs.getBytes("MEDIA_FILE");
             crime.put("demoImg", (demoBytes != null) ? Base64.getEncoder().encodeToString(demoBytes) : "");
 
             // Fetch reporter info

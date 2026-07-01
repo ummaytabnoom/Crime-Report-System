@@ -2,6 +2,11 @@
 <%@ page import="java.sql.*, java.util.*, java.io.*, java.util.Base64" %>
 <%
 String currentUser = (String) session.getAttribute("username");
+String userRole = (String) session.getAttribute("userRole");
+boolean isAdmin = "admin".equals(userRole);
+boolean isPolice = "police".equalsIgnoreCase(userRole);
+String username = (String) session.getAttribute("username");
+
 String message = "";
 byte[] imageBytes = null;
 
@@ -57,7 +62,6 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
     <meta charset="UTF-8">
     <title>Admin Users</title>
     <style>
-        /* Keep your existing CSS unchanged */
         body {
             margin: 0;
             padding: 0;
@@ -72,11 +76,6 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .navbar-title {
-            font-size: 22px;
-            font-weight: bold;
         }
 
         .menu-icon {
@@ -130,31 +129,50 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             background-color: rgba(255, 255, 255, 0.95);
             padding: 30px;
             border-radius: 10px;
-            max-width: 1200px;
+            max-width: 1350px;
             margin: 20px auto;
             color: black;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 13px;
         }
 
         th, td {
-            border: 1px solid #999;
-            padding: 10px;
+            border: 1px solid #bbb;
+            padding: 10px 6px;
             text-align: center;
+            vertical-align: middle;
         }
 
-        th { background-color: #FFA500; color: white; }
+        th { 
+            background-color: #FFA500; 
+            color: white; 
+            font-size: 14px;
+            white-space: nowrap;
+        }
 
         tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f5f9; }
 
         img.profile {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             object-fit: cover;
             border-radius: 50%;
+            border: 2px solid #005F5F;
+        }
+        
+        img.front-pic {
+            width: 80px;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            margin-top: 5px;
         }
 
         .user-info {
@@ -170,32 +188,33 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             object-fit: cover;
             border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease;
         }
-
-        .user-pic:hover { transform: scale(1.1); }
 
         .user-name {
             font-size: 16px;
             font-weight: bold;
             color: white;
-            letter-spacing: 0.5px;
         }
-         .search-bar { text-align:center; margin-bottom:20px; }
+
+        .search-bar { text-align:center; margin-bottom:20px; }
         .search-bar input[type="text"] { width:250px; padding:8px; border:1px solid #ccc; border-radius:5px; }
         .search-bar button { padding:8px 15px; border:none; border-radius:5px; background-color:#FF8C00; color:#fff; cursor:pointer; }
         .search-bar button:hover { background-color:#e67300; }
-   
 
         h2 { text-align:center; margin-bottom:20px; color:#333; }
+        
+        .info-block {
+            text-align: left;
+            font-size: 12px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
 
 <div class="navbar">
-	<div class="top-right-buttons">
-        <a href="AdminsHome.jsp">Admin Dashboard</a>
-        <a href="UserHome.jsp">User Dashboard</a>
+    <div class="top-right-buttons">
+        <a href="UserHome.jsp">Dashboard</a>
     </div>
 
     <div class="user-info">
@@ -209,16 +228,23 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
+         <% if(isAdmin){ %>
+            <a href="AdminsHome.jsp">Admin Panel</a>
+        <% } %>
+        <% if(isPolice){ %>
+            <a href="PoliceHome.jsp">Police Panel</a>
+        <% } %>
+        
         <a href="Settings.jsp">Settings</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>
 
 <div class="content-box">
-    <h2>All Police Users</h2>
+    <h2>Detailed Police Directory Panel</h2>
     <div class="search-bar">
         <form method="get">
-            <input type="text" name="search" placeholder="Search by username or full name" value="<%= (searchQuery != null) ? searchQuery : "" %>" />
+            <input type="text" name="search" placeholder="Search by name or username..." value="<%= (searchQuery != null) ? searchQuery : "" %>" />
             <button type="submit">Search</button>
             <% if (searchQuery != null && !searchQuery.trim().isEmpty()) { %>
                 <button type="button" onclick="window.location='PoliceInfo.jsp'">Clear</button>
@@ -227,11 +253,13 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
     </div>
     <table>
         <tr>
-            <th>Profile Picture</th>
-            <th>Full Name</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Mobile</th>
+            <th>Photos</th>
+            <th>Account Details</th>
+            <th>Designation Details</th>
+            <th>Deployment Station</th>
+            <th>Parental Lineage</th>
+            <th>Permanent Address</th>
+            <th>Medical Records / Injuries</th>
         </tr>
         <%
             Connection conn = null;
@@ -241,19 +269,23 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
                 Class.forName("oracle.jdbc.driver.OracleDriver");
                 conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
 
-                // Check if a search query exists and modify the SQL query accordingly
-                String sql;
-                if (searchParam != null) {
-                    sql = "SELECT FULL_NAME, USER_NAME, EMAIL, MOBILE, PROFILE_PICTURE FROM REGISTERED_USERS " +
-                          "WHERE ROLE = 'police' AND (LOWER(FULL_NAME) LIKE ? OR LOWER(USER_NAME) LIKE ?)";
-                } else {
-                    sql = "SELECT FULL_NAME, USER_NAME, EMAIL, MOBILE, PROFILE_PICTURE FROM REGISTERED_USERS " +
-                          "WHERE ROLE = 'police'";
-                }
+                // CHANGED: The inner query selection string maps p.POSTING_CITY and p.POLICE_STATION directly out of the JOIN database view.
+               String sql = "SELECT u.FULL_NAME, u.USER_NAME, u.EMAIL, u.MOBILE, u.PROFILE_PICTURE, u.POLICE_ID, " +
+             "       p.POST_NAME, p.POSTING_AREA, p.POSTING_CITY, p.POLICE_STATION, " +
+             "       p.SELECTION_YEAR, p.POSTING_YEAR, p.FATHERS_NAME, p.MOTHERS_NAME, " +
+             "       p.PERMANENT_ADDRESS, p.MERITAL_STATUS, p.INJURIES, p.PICTURE_FRONT " +
+             "FROM REGISTERED_USERS u " +
+             "LEFT JOIN POLICE_INFO p ON UPPER(TRIM(p.POLICE_ID)) = UPPER(TRIM(u.POLICE_ID)) " +
+             "WHERE u.ROLE = 'police'";
+
+if (searchParam != null) {
+    sql += " AND (LOWER(u.FULL_NAME) LIKE ? OR LOWER(u.USER_NAME) LIKE ?)";
+}
+
+sql += " ORDER BY u.ID ASC";
                 
                 stmt = conn.prepareStatement(sql);
 
-                // Set parameters for the search query if it exists
                 if (searchParam != null) {
                     stmt.setString(1, searchParam);
                     stmt.setString(2, searchParam);
@@ -261,9 +293,8 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
                 rs = stmt.executeQuery();
                 
-                if (!rs.isBeforeFirst() && searchParam != null) {
-                    // No records found for the search query
-                    out.println("<tr><td colspan='5'>No police users found with that name or username.</td></tr>");
+                if (!rs.isBeforeFirst()) {
+                    out.println("<tr><td colspan='7' style='padding:20px; font-weight:bold; text-align:center;'>No matching deployment profiles found.</td></tr>");
                 }
                 
                 while (rs.next()) {
@@ -271,40 +302,111 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
                     String userName = rs.getString("USER_NAME");
                     String email = rs.getString("EMAIL");
                     String mobile = rs.getString("MOBILE");
+                    String targetPoliceId = rs.getString("POLICE_ID") != null ? rs.getString("POLICE_ID") : "N/A";
 
-                    Blob blob = rs.getBlob("PROFILE_PICTURE");
-                    String base64Image = "";
-                    if (blob != null) {
-                        InputStream inputStream = blob.getBinaryStream();
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    // Fetch police records securely
+                    String postName = rs.getString("POST_NAME") != null ? rs.getString("POST_NAME") : "N/A";
+                    String postingArea = rs.getString("POSTING_AREA") != null ? rs.getString("POSTING_AREA") : "N/A";
+                    
+                    // ADDED columns extraction logic from database result set
+                    String postingCity = rs.getString("POSTING_CITY") != null ? rs.getString("POSTING_CITY") : "N/A";
+                    String policeStation = rs.getString("POLICE_STATION") != null ? rs.getString("POLICE_STATION") : "N/A";
+                    
+                    int selectionYear = rs.getInt("SELECTION_YEAR");
+                    int postingYear = rs.getInt("POSTING_YEAR");
+                    String fathersName = rs.getString("FATHERS_NAME") != null ? rs.getString("FATHERS_NAME") : "N/A";
+                    String mothersName = rs.getString("MOTHERS_NAME") != null ? rs.getString("MOTHERS_NAME") : "N/A";
+                    String permanentAddress = rs.getString("PERMANENT_ADDRESS") != null ? rs.getString("PERMANENT_ADDRESS") : "N/A";
+                    String maritalStatus = rs.getString("MERITAL_STATUS") != null ? rs.getString("MERITAL_STATUS") : "N/A";
+                    String injuries = rs.getString("INJURIES") != null ? rs.getString("INJURIES") : "None Reported";
+
+                    // Binary conversion parsing for account photo avatar
+                    Blob profileBlob = rs.getBlob("PROFILE_PICTURE");
+                    String base64Profile = "";
+                    if (profileBlob != null) {
+                        InputStream is = profileBlob.getBinaryStream();
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
                         byte[] buffer = new byte[4096];
                         int bytesRead;
-                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            os.write(buffer, 0, bytesRead);
                         }
-                        byte[] adminImageBytes = outputStream.toByteArray();
-                        base64Image = Base64.getEncoder().encodeToString(adminImageBytes);
-                        inputStream.close();
-                        outputStream.close();
+                        base64Profile = Base64.getEncoder().encodeToString(os.toByteArray());
+                        is.close(); os.close();
+                    }
+
+                    // Binary conversion parsing for uniform profile picture
+                    Blob frontBlob = rs.getBlob("PICTURE_FRONT");
+                    String base64Front = "";
+                    if (frontBlob != null) {
+                        InputStream is = frontBlob.getBinaryStream();
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            os.write(buffer, 0, bytesRead);
+                        }
+                        base64Front = Base64.getEncoder().encodeToString(os.toByteArray());
+                        is.close(); os.close();
                     }
         %>
         <tr>
             <td>
-                <% if (!base64Image.equals("")) { %>
-                    <img src="data:image/jpeg;base64,<%= base64Image %>" class="profile"/>
-                <% } else { %>
-                    <img src="images/default-profile.png" class="profile"/>
-                <% } %>
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+                    <% if (!base64Profile.isEmpty()) { %>
+                        <img src="data:image/jpeg;base64,<%= base64Profile %>" class="profile" alt="Avatar"/>
+                    <% } else { %>
+                        <img src="images/default-profile.png" class="profile" alt="Default Avatar"/>
+                    <% } %>
+                    
+                    <% if (!base64Front.isEmpty()) { %>
+                        <img src="data:image/jpeg;base64,<%= base64Front %>" class="front-pic" alt="Uniform Photo"/>
+                    <% } %>
+                </div>
             </td>
-            <td><%= fullName %></td>
-            <td><%= userName %></td>
-            <td><%= email %></td>
-            <td><%= mobile %></td>
+            
+            <td>
+                <div class="info-block">
+                    <strong>Name:</strong> <%= fullName %><br>
+                    <strong>Username:</strong> <%= userName %><br>
+                    <strong>Mapped ID:</strong> <span style="color:#FF8C00; font-weight:bold;"><%= targetPoliceId %></span><br>
+                    <strong>Email:</strong> <%= email %><br>
+                    <strong>Mobile:</strong> <%= mobile %>
+                </div>
+            </td>
+            
+            <td>
+                <div class="info-block">
+                    <strong>Rank/Post:</strong> <span style="color:#005F5F; font-weight:bold;"><%= postName %></span><br>
+                    <strong>Enlistment Year:</strong> <%= (selectionYear > 0 ? String.valueOf(selectionYear) : "N/A") %><br>
+                    <strong>Station Assignment Year:</strong> <%= (postingYear > 0 ? String.valueOf(postingYear) : "N/A") %>
+                </div>
+            </td>
+
+            <td>
+                <div class="info-block">
+                    <strong>Zilla/City:</strong> <span style="color:#FF8C00; font-weight:bold;"><%= postingCity %></span><br>
+                    <strong>Thana/Station:</strong> <%= policeStation %><br>
+                    <strong>Specific Area:</strong> <%= postingArea %>
+                </div>
+            </td>
+            
+            <td>
+                <div class="info-block">
+                    <strong>Father:</strong> <%= fathersName %><br>
+                    <strong>Mother:</strong> <%= mothersName %><br>
+                    <strong>Marital Status:</strong> <%= maritalStatus %>
+                </div>
+            </td>
+            
+            <td style="max-width: 200px; text-align: left; word-break: break-word;"><%= permanentAddress %></td>
+            
+            <td style="max-width: 200px; text-align: left; color: #dc3545; font-weight: 500; word-break: break-word;"><%= injuries %></td>
         </tr>
         <%
                 }
             } catch (Exception e) {
-                out.println("<tr><td colspan='5' style='color: red;'>Database error: " + e.getMessage() + "</td></tr>");
+                out.println("<tr><td colspan='7' style='color: red; font-weight:bold;'>Database runtime fault: " + e.getMessage() + "</td></tr>");
                 e.printStackTrace();
             } finally {
                 if (rs != null) try { rs.close(); } catch (SQLException e) { /* Ignored */ }

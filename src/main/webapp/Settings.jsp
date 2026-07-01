@@ -110,7 +110,7 @@ boolean isPolice = "police".equals(userRole);
         .top-right-buttons {
             position: absolute;
             top: 25px;
-            left: 90%;
+            left: 80%;
             transform: translateX(-50%);
             display: flex;
             gap: 20px;
@@ -222,6 +222,10 @@ boolean isPolice = "police".equals(userRole);
          <% if(isAdmin){ %>
             <a href="AdminsHome.jsp">Admin Panel</a>
         <% } %>
+        
+         <% if(isPolice){ %>
+            <a href="PoliceHome.jsp">Police Panel</a>
+        <% } %>
             <a href="Settings.jsp">Settings</a>
             <a href="Logout.jsp">Logout</a>
         </div>
@@ -229,7 +233,7 @@ boolean isPolice = "police".equals(userRole);
 
     <!-- Top Right Button -->
     <div class="top-right-buttons">
-        <a href="UserHome.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">Dashboard</a>
     </div>
 
     <!-- Main Content -->

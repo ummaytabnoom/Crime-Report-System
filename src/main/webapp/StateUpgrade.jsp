@@ -4,196 +4,267 @@
 <%@ page import="java.util.List, java.util.Map, java.util.ArrayList, java.util.HashMap" %>
 
 <%
+    // Ensure only logged-in police officers can access this management action page
     String currentUser = (String) session.getAttribute("username");
-    if (currentUser == null) {
+    String userRole = (String) session.getAttribute("userRole");
+
+    if (currentUser == null || !"police".equals(userRole)) {
         response.sendRedirect("Login.jsp");
         return;
     }
 
-    byte[] profileImageBytes = null;
-    List<Map<String, Object>> crimeList = new ArrayList<>();
-    String message = "";
-    String searchQuery = request.getParameter("search");
-    
-    // Use a cache to store user details to avoid multiple database calls inside the loop
-    Map<String, Map<String, String>> userCache = new HashMap<>();
+    byte[] imageBytes = null;
+    List<Map<String,Object>> crimeList = new ArrayList<>();
+    String feedbackMessage = "";
 
-    // Use try-with-resources to ensure resources are always closed
-    try (Connection conn = DriverManager.getConnection(
-            "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345")) {
-        
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    try {
         Class.forName("oracle.jdbc.OracleDriver");
-
-        // --- Handle POST requests (Status update/deletion) ---
-        if ("POST".equalsIgnoreCase(request.getMethod())) {
-            String action = request.getParameter("action");
-            String crimeIdParam = request.getParameter("crimeId");
-            if (action != null && crimeIdParam != null) {
-                int crimeId = Integer.parseInt(crimeIdParam);
-                String sql = "";
-                if ("delete".equalsIgnoreCase(action)) {
-                    sql = "DELETE FROM PERMANENT_REPORTS WHERE CRIME_ID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setInt(1, crimeId);
-                        ps.executeUpdate();
-                    }
-                    message = "Crime report deleted successfully.";
-                } else {
-                    sql = "UPDATE PERMANENT_REPORTS SET STATUS = ? WHERE CRIME_ID = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, action);
-                        ps.setInt(2, crimeId);
-                        ps.executeUpdate();
-                    }
-                    message = "Status updated to " + action + ".";
-                }
-            }
-        }
+        conn = DriverManager.getConnection(
+                "jdbc:oracle:thin:@localhost:1521:XE",
+                "system",
+                "a12345");
         
-        // --- Fetch current user's profile picture once ---
-        try (PreparedStatement ps = conn.prepareStatement(
-                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME=?")) {
-            ps.setString(1, currentUser);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Blob blob = rs.getBlob("PROFILE_PICTURE");
-                    if (blob != null) {
-                        try (InputStream is = blob.getBinaryStream();
-                             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                            byte[] buffer = new byte[1024];
-                            int bytesRead;
-                            while ((bytesRead = is.read(buffer)) != -1) {
-                                os.write(buffer, 0, bytesRead);
-                            }
-                            profileImageBytes = os.toByteArray();
-                        }
-                    }
+        // Enforce auto-commit so Oracle saves changes instantly
+        conn.setAutoCommit(true);
+
+        /* =========================================================
+           FETCH LOGGED-IN OFFICER'S ASSIGNED POSTING REGIONS
+           (Using TRIM and UPPER to match variations safely)
+        ========================================================= */
+        String officerCity = "";
+        String officerStation = "";
+        
+        
+        String policeId = "";
+        PreparedStatement idStmt = conn.prepareStatement(
+                "SELECT TRIM(POLICE_ID) AS POLICE_ID FROM REGISTERED_USERS WHERE UPPER(TRIM(USER_NAME)) = UPPER(TRIM(?))");
+        idStmt.setString(1, currentUser);
+        ResultSet idRs = idStmt.executeQuery();
+        if (idRs.next()) {
+            policeId = idRs.getString("POLICE_ID");
+        }
+        idRs.close();
+        idStmt.close();
+        System.out.println("police"+policeId);
+        PreparedStatement officerStmt = conn.prepareStatement(
+                "SELECT TRIM(POSTING_CITY) AS POSTING_CITY, TRIM(POLICE_STATION) AS POLICE_STATION " +
+                "FROM POLICE_INFO WHERE UPPER(TRIM(POLICE_ID)) = UPPER(TRIM(?))");
+        officerStmt.setString(1, policeId); 
+        ResultSet officerRs = officerStmt.executeQuery();
+
+        if (officerRs.next()) {
+            officerCity = officerRs.getString("POSTING_CITY");
+            officerStation = officerRs.getString("POLICE_STATION");
+            
+            
+            
+        }
+        officerRs.close();
+        officerStmt.close();
+        
+        /* =========================================================
+           HANDLE STATUS UPDATE (POST REQUEST)
+        ========================================================= */
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            String crimeIdParam = request.getParameter("crimeId");
+            String newStatus = request.getParameter("newStatus");
+            
+            
+
+            if (crimeIdParam != null && newStatus != null && !crimeIdParam.trim().isEmpty()) {
+                int crimeId = Integer.parseInt(crimeIdParam.trim());
+
+                // Target STATUS and UPGRADED_BY from your table schema
+                String updateQuery = "UPDATE REPORTED_CRIMES SET STATUS = ?, UPGRADED_BY = ? WHERE CRIME_ID = ?";
+                PreparedStatement updatePs = conn.prepareStatement(updateQuery);
+
+                updatePs.setString(1, newStatus.trim());
+                updatePs.setString(2, currentUser.trim()); // Saves active police username
+                updatePs.setInt(3, crimeId);
+
+                int rowsAffected = updatePs.executeUpdate();
+                updatePs.close();
+
+                if (rowsAffected > 0) {
+                    feedbackMessage = "Success! Status changed to '" + newStatus + "' and logged under officer '" + currentUser + "'.";
+                } else {
+                    feedbackMessage = "Error: No records updated for CRIME_ID: " + crimeId;
                 }
             }
         }
 
-        // --- Fetch ALL user details into a cache to avoid repeated queries ---
-        try (PreparedStatement ps = conn.prepareStatement(
-                "SELECT PROFILE_PICTURE, MOBILE, FULL_NAME, USER_NAME FROM REGISTERED_USERS")) {
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, String> userInfo = new HashMap<>();
-                    byte[] profileBytes = rs.getBytes("PROFILE_PICTURE");
-                    userInfo.put("profileImg", (profileBytes != null) ? Base64.getEncoder().encodeToString(profileBytes) : "");
-                    userInfo.put("mobile", rs.getString("MOBILE"));
-                    userInfo.put("fullName", rs.getString("FULL_NAME"));
-                    userCache.put(rs.getString("USER_NAME"), userInfo);
+        /* =========================================================
+           FETCH POLICE OFFICER PROFILE PICTURE
+        ========================================================= */
+        stmt = conn.prepareStatement(
+                "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE UPPER(TRIM(USER_NAME))=UPPER(TRIM(?))");
+        stmt.setString(1, currentUser);
+        rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            Blob blob = rs.getBlob("PROFILE_PICTURE");
+            if (blob != null) {
+                InputStream is = blob.getBinaryStream();
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
                 }
+                imageBytes = os.toByteArray();
+                is.close();
             }
         }
+        rs.close();
+        stmt.close();
 
-        // --- Fetch ALL crime reports with search functionality ---
-        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM PERMANENT_REPORTS");
-        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
-            sqlBuilder.append(" WHERE LOWER(USER_NAME) LIKE ? OR LOWER(FULL_NAME) LIKE ?");
-        }
-        sqlBuilder.append(" ORDER BY CRIME_ID DESC");
+        /* =========================================================
+           FETCH FILTERED VISIBLE/APPROVED CRIMES
+           Enhanced query using TRIM() on database columns to eliminate formatting gaps
+        ========================================================= */
+        PreparedStatement ps = conn.prepareStatement(
+                "SELECT * FROM REPORTED_CRIMES " +
+                "WHERE ACCEPTED_BY IS NOT NULL " +
+                "AND UPPER(TRIM(ZILLA)) = UPPER(TRIM(?)) " +
+                "AND UPPER(TRIM(POLICE_STATION)) = UPPER(TRIM(?)) " +
+                "ORDER BY CRIME_ID DESC");
 
-        try (PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-            int paramIndex = 1;
-            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
-                ps.setString(paramIndex++, "%" + searchQuery.toLowerCase() + "%");
-                ps.setString(paramIndex++, "%" + searchQuery.toLowerCase() + "%");
-            }
-            try (ResultSet crimesRs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                while (crimesRs.next()) {
-                    Map<String, Object> crime = new HashMap<>();
-                    String reporterUsername = crimesRs.getString("USER_NAME");
-                    String hideIdentity = crimesRs.getString("HIDE_IDENTITY");
+        ps.setString(1, officerCity != null ? officerCity : "");
+        
+        ps.setString(2, officerStation != null ? officerStation : "");
 
-                    crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
-                    crime.put("userName", reporterUsername);
-                    crime.put("category", crimesRs.getString("CATEGORY"));
-                    crime.put("description", crimesRs.getString("DESCRIPTION"));
-                    crime.put("status", crimesRs.getString("STATUS"));
+        ResultSet crimesRs = ps.executeQuery();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-                    java.sql.Timestamp ts = crimesRs.getTimestamp("DATE_OF_INCIDENT");
-                    String formattedDate = (ts != null) ? sdf.format(ts) : "";
-                    crime.put("date", formattedDate);
+        while (crimesRs.next()) {
+            Map<String, Object> crime = new HashMap<>();
+            String hideIdentity = crimesRs.getString("HIDE_IDENTITY");
 
-                    String zilla = crimesRs.getString("ZILLA");
-                    String upazilla = crimesRs.getString("UPAZILLA");
-                    String policeStation = crimesRs.getString("POLICE_STATION");
-                    String roadName = crimesRs.getString("ROAD_NAME");
-                    String roadNo = crimesRs.getString("ROAD_NO");
-                    crime.put("fullLocation", zilla + ", " + upazilla + ", " + policeStation + ", " + roadName + ", Road No: " + roadNo);
+            crime.put("crimeId", crimesRs.getInt("CRIME_ID"));
+            crime.put("category", crimesRs.getString("CATEGORY"));
+            crime.put("status", crimesRs.getString("STATUS"));
+            crime.put("upgradedBy", crimesRs.getString("UPGRADED_BY"));
+            crime.put("acceptedBy", crimesRs.getString("ACCEPTED_BY"));
 
-                    byte[] demoBytes = crimesRs.getBytes("DEMO_PICTURE");
-                    crime.put("demoImg", (demoBytes != null) ? Base64.getEncoder().encodeToString(demoBytes) : "");
-
-                    // Use the cached user details
-                    Map<String, String> reporterInfo = userCache.get(reporterUsername);
-                    if(reporterInfo != null) {
-                        crime.put("profileImg", reporterInfo.get("profileImg"));
-                        crime.put("mobileNo", reporterInfo.get("mobile"));
-                        crime.put("realFullName", reporterInfo.get("fullName"));
-                        crime.put("realUsername", reporterUsername);
-                    } else {
-                        // Handle case where user info is not in cache (e.g., deleted user)
-                        crime.put("profileImg", "");
-                        crime.put("mobileNo", "N/A");
-                        crime.put("realFullName", "Unknown");
-                        crime.put("realUsername", "Unknown");
-                    }
-                    
-                    crime.put("hideIdentity", hideIdentity);
-
-                    if ("YES".equalsIgnoreCase(hideIdentity)) {
-                        crime.put("displayName", "Anonymous");
-                        crime.put("displayUsername", "");
-                    } else {
-                        crime.put("displayName", crime.get("realFullName"));
-                        crime.put("displayUsername", " (Username: " + crime.get("realUsername") + ")");
-                    }
-                    
-                    crimeList.add(crime);
+            // Read CLOB Description
+            Reader clobReader = crimesRs.getCharacterStream("DESCRIPTION");
+            if (clobReader != null) {
+                StringBuilder sb = new StringBuilder();
+                char[] charBuf = new char[1024];
+                int charsRead;
+                while ((charsRead = clobReader.read(charBuf)) != -1) {
+                    sb.append(charBuf, 0, charsRead);
                 }
+                crime.put("description", sb.toString());
+            } else {
+                crime.put("description", "");
             }
+
+            java.sql.Timestamp ts = crimesRs.getTimestamp("DATE_OF_INCIDENT");
+            crime.put("date", (ts != null) ? sdf.format(ts) : "");
+
+            // Location Builder
+            String location = crimesRs.getString("ZILLA") + ", " +
+                              crimesRs.getString("UPAZILLA") + ", " +
+                              crimesRs.getString("POLICE_STATION") + ", " +
+                              (crimesRs.getString("AREA") != null ? crimesRs.getString("AREA") + ", " : "") +
+                              crimesRs.getString("ROAD_NAME") + ", Road No: " +
+                              crimesRs.getString("ROAD_NO");
+            crime.put("fullLocation", location);
+
+         // Fetch media file and media type
+            byte[] mediaBytes = crimesRs.getBytes("MEDIA_FILE");
+            String mediaType = crimesRs.getString("MEDIA_TYPE");
+
+            crime.put("mediaType", mediaType);
+
+            if (mediaBytes != null) {
+                crime.put("mediaData", Base64.getEncoder().encodeToString(mediaBytes));
+            } else {
+                crime.put("mediaData", "");
+            }
+            /* =====================================================
+               FETCH REPORTER ACTUAL DETAILS
+            ===================================================== */
+            PreparedStatement userStmt = conn.prepareStatement(
+                    "SELECT PROFILE_PICTURE, MOBILE, FULL_NAME, USER_NAME FROM REGISTERED_USERS WHERE UPPER(TRIM(USER_NAME))=UPPER(TRIM(?))");
+            userStmt.setString(1, crimesRs.getString("USER_NAME"));
+            ResultSet userRs = userStmt.executeQuery();
+
+            String profileImg = "";
+            String mobileNo = "";
+            String fullNameReal = "";
+            String userNameReal = "";
+
+            if (userRs.next()) {
+                byte[] profileBytes = userRs.getBytes("PROFILE_PICTURE");
+                if (profileBytes != null) profileImg = Base64.getEncoder().encodeToString(profileBytes);
+                mobileNo = userRs.getString("MOBILE");
+                fullNameReal = userRs.getString("FULL_NAME");
+                userNameReal = userRs.getString("USER_NAME");
+            }
+            userRs.close();
+            userStmt.close();
+
+            crime.put("profileImg", profileImg);
+            crime.put("mobileNo", mobileNo);
+            crime.put("realFullName", fullNameReal);
+            crime.put("realUsername", userNameReal);
+
+            if ("YES".equalsIgnoreCase(hideIdentity)) {
+                crime.put("displayName", "Anonymous (Identity Hidden from Public)");
+            } else {
+                crime.put("displayName", fullNameReal + " (Username: " + userNameReal + ")");
+            }
+
+            crimeList.add(crime);
         }
+        crimesRs.close();
+        ps.close();
+
     } catch (Exception e) {
-        // Log the full stack trace for debugging purposes in a real application
-        // e.printStackTrace();
-        message = "Database Error: " + e.getMessage();
+        feedbackMessage = "System Error: " + e.getMessage();
+    } finally {
+        try { if (rs != null) rs.close(); } catch (Exception e) {}
+        try { if (stmt != null) stmt.close(); } catch (Exception e) {}
+        try { if (conn != null) conn.close(); } catch (Exception e) {}
     }
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>State Upgrade Panel</title>
+    <title>Police - Report Status Manager</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: url("images/adminMan.png") no-repeat center center fixed;
+            background: url("images/adminHome.jpg") no-repeat center center fixed;
             background-size: cover;
             font-family: Arial, sans-serif;
-            color: white;
         }
         .navbar {
             background-color: #FF8C00;
             padding: 14px 20px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .menu-icon {
             font-size: 26px;
             cursor: pointer;
-            position: relative;
-            top: 10px;
+            color: white;
         }
         .dropdown {
             position: absolute;
             top: 60px;
             right: 20px;
             background-color: white;
-            color: black;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             border-radius: 6px;
             display: none;
             flex-direction: column;
@@ -205,12 +276,23 @@
             text-decoration: none;
             color: #333;
             border-bottom: 1px solid #eee;
+            display: block;
         }
-        .dropdown a:hover {
-            background-color: #f2f2f2;
+        .dropdown a:hover { background-color: #f2f2f2; }
+        .show { display: flex; }
+        .top-right-buttons {
+            position: absolute;
+            top: 30px;
+            left: 80%;
+            transform: translateX(0%);
         }
-        .show {
-            display: flex;
+        .top-right-buttons a {
+            padding: 10px 15px;
+            background-color: #005F5F;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
         }
         .user-info {
             display: inline-flex;
@@ -227,19 +309,26 @@
         .user-name {
             font-weight: bold;
             color: white;
-            font-size: 25px;
+            font-size: 22px;
         }
-
-        .crime-container {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin: 25px auto;
-            border-radius: 10px;
-            background-color: #f2f2f2;
+        .content-box {
+            background-color: rgba(255, 255, 255, 0.96);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 1000px;
+            margin: 40px auto;
             color: black;
-            width: 80%;
-            max-width: 800px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        h2 { text-align: center; color: #222; }
+        
+        .crime-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .profile-image {
             width: 60px;
@@ -250,345 +339,207 @@
             margin-right: 15px;
             border: 2px solid #007BFF;
         }
-	.crime-image {
-	    width: 600px;   /* exact width */
-	    height: 450px;  /* exact height */
-	    display: block;
-	    margin-top: 15px;
-	    border-radius: 8px;
-	}
-        .top-right-buttons {
-            position: absolute;
-            top: 30px;
-            left: 55%;
-            transform: translateX(0%);
-        }
-        .top-right-buttons a {
-            background-color: #005F5F;
-            color: white;
-            padding: 8px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-        }
-        .top-right-buttons a:hover {
-            background-color: #008C8C;
-            color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .search-bar {
-            width: 60%;
+        .crime-image {
+            width: 100%;
             max-width: 500px;
-            margin: 0 auto 20px auto;
+            height: auto;
             display: block;
-            padding: 10px 15px;
+            margin: 15px 0;
             border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
         }
-        .search-bar form {
-            display: flex;
-            gap: 10px;
-        }
-        .search-bar input[type="text"] {
-            flex-grow: 1;
-            padding: 8px 12px;
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
             border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .search-bar button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007BFF;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .search-bar button:hover {
-            background-color: #0056b3;
-        }
-        .content-box {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 1200px;
-            margin: 40px auto;
-            color: black;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: black;
-        }
-
-        .user-info-btn {
-            background-color: #007BFF;
-            color: white;
-            padding: 6px 16px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
             font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        .user-info-btn:hover {
-            background-color: #3399FF;
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
-        #userModal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        #userModalContent {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 400px;
-            text-align: center;
-            color: black;
-            font-weight: bold;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        #userModalContent h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        #userModalContent img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 2px solid #007BFF;
-            margin-bottom: 15px;
-            align-items: center;
-        }
-
-        #userModalContent p {
-            margin: 5px 0;
-            color: #000;
-            font-size: 16px;
-        }
-
-        #userModalContent button {
-            margin-top: 20px;
-            padding: 8px 18px;
-            border: none;
-            border-radius: 8px;
-            background-color: #007BFF;
             color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
+        .badge-pending { background-color: orange; }
+        .badge-ongoing { background-color: #007BFF; }
+        .badge-resolved { background-color: green; }
 
-        #userModalContent button:hover {
-            background-color: #3399FF;
-        }
-
-        .status-buttons {
-            display: flex;
-            gap: 10px;
+        .btn-group {
             margin-top: 15px;
-            justify-content: center;
+            display: flex;
+            gap: 10px;
         }
-
-        .status-buttons form {
-            margin: 0;
-        }
-
-        .btn {
-            padding: 8px 15px;
+        .status-btn {
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             color: white;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: opacity 0.2s;
         }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .pending {
-            background-color: #FFC107;
-        }
-
-        .pending:hover {
-            background-color: #e0a800;
-        }
-
-        .under {
-            background-color: #007BFF;
-        }
-
-        .under:hover {
-            background-color: #0056b3;
-        }
-
-        .resolved {
-            background-color: #28A745;
-        }
-
-        .resolved:hover {
-            background-color: #218838;
+        .status-btn:hover { opacity: 0.9; }
+        .p-btn { background-color: orange; }
+        .o-btn { background-color: #007BFF; }
+        .r-btn { background-color: green; }
+        
+        .meta-info {
+            background: #eef2f3;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-<div class="navbar">
-    <div class="user-info">
-        <% if (profileImageBytes != null) { %>
-            <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(profileImageBytes) %>" alt="Profile Picture" />
-        <% } else { %>
-            <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
-        <% } %>
-        <span class="user-name"><%= currentUser %></span>
-    </div>
-    <div class="top-right-buttons">
-        <a href="ReportSub.jsp">Report A Crime</a>
-        <a href="MyReports.jsp">My Reports</a>
-        <a href="PoliceHome.jsp">Police Dashboard</a>
-        <a href="UserHome.jsp">User Dashboard</a>
-    </div>
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
-    <div id="dropdownMenu" class="dropdown">
-        <a href="Settings.jsp">Settings</a>
-        <a href="Logout.jsp">Logout</a>
-    </div>
-</div>
 
-<div class="content-box">
-    <h2>State Upgrade Panel</h2>
-
-    <% if (!message.isEmpty()) { %>
-        <p style="color: green; text-align: center; font-weight: bold;"><%= message %></p>
-    <% } %>
-
-    <div class="search-bar">
-        <form method="get">
-            <input type="text" name="search" placeholder="Search by username or full name" value="<%= (searchQuery != null) ? searchQuery : "" %>" />
-            <button type="submit">Search</button>
-            <% if (searchQuery != null && !searchQuery.trim().isEmpty()) { %>
-                <button type="button" onclick="window.location='StateUpgrade.jsp'">Clear</button>
+    <div class="navbar">
+        <div class="user-info">
+            <% if (imageBytes != null) { %>
+                <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" />
+            <% } else { %>
+                <img class="user-pic" src="images/default.png" />
             <% } %>
-        </form>
-    </div>
-
-    <% if (crimeList != null && !crimeList.isEmpty()) {
-        for (Map<String,Object> crime : crimeList) {
-            String displayName = (String) crime.get("displayName");
-            String hideIdentity = (String) crime.get("hideIdentity");
-    %>
-    <div class="crime-container">
-        <% String profileImg = (String) crime.get("profileImg"); %>
-        <% if ("YES".equalsIgnoreCase(hideIdentity)) { %>
-            <img src="images/default.png" class="profile-image" alt="Anonymous"/>
-        <% } else if (profileImg != null && !profileImg.isEmpty()) { %>
-            <img src="data:image/jpeg;base64,<%= profileImg %>" class="profile-image" alt="Profile"/>
-        <% } else { %>
-            <img src="images/default.png" class="profile-image" alt="Default"/>
-        <% } %>
-
-        <h3>
-        <% if("Anonymous".equals(displayName)) { %>
-            <button class="user-info-btn"
-                onclick="showUserInfo('<%= crime.get("realFullName") %>', '<%= crime.get("realUsername") %>', '<%= crime.get("mobileNo") %>', '<%= crime.get("profileImg") %>')">Anonymous</button>
-        <% } else { %>
-            <%= displayName %><%= crime.get("displayUsername") %>
-            <span style="color: gray; font-size: 14px;"> | Mobile: <%= crime.get("mobileNo") %></span>
-        <% } %>
-        </h3>
-
-        <p><strong>Category:</strong> <%= crime.get("category") %></p>
-        <p><strong>Location:</strong> <%= crime.get("fullLocation") %></p>
-        <p><strong>Date:</strong> <%= crime.get("date") %></p>
-        <p><strong>Description:</strong> <%= crime.get("description") %></p>
-        <p><strong>Status:</strong> <%= crime.get("status") %></p>
-
-        <% if (!((String)crime.get("demoImg")).isEmpty()) { %>
-            <img src="data:image/jpeg;base64,<%= crime.get("demoImg") %>" class="crime-image" />
-        <% } else { %>
-            <p><i>No crime image uploaded.</i></p>
-        <% } %>
-
-        <div class="status-buttons">
-            <form method="post">
-                <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
-                <input type="hidden" name="action" value="Pending">
-                <button type="submit" class="btn pending">Set Pending</button>
-            </form>
-            <form method="post">
-                <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
-                <input type="hidden" name="action" value="Under Investigation">
-                <button type="submit" class="btn under">Set Under Investigation</button>
-            </form>
-            <form method="post">
-                <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
-                <input type="hidden" name="action" value="Resolved">
-                <button type="submit" class="btn resolved">Set Resolved</button>
-            </form>
+            <span class="user-name"><%= currentUser %> (Police Officer)</span>
         </div>
-
-    </div>
-    <% }
-    } else { %>
-        <p style="text-align: center; color: black; font-size: 18px;">No crime reports found.</p>
-    <% } %>
-
-    <div id="userModal">
-        <div id="userModalContent">
-           <img id="modalProfileImg" src=""
-     style="width:80px; height:80px; border-radius:50%; display:block; margin: 0 auto 15px auto;">
-<h3>User Information</h3>
-
-            <p id="modalFullName"></p>
-            <p id="modalUsername"></p>
-            <p id="modalMobile"></p>
-            <button onclick="closeModal()">Close</button>
+        <div class="top-right-buttons">
+            <a href="UserHome.jsp">Dashboard</a>
+        </div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+        <div id="dropdownMenu" class="dropdown">
+            <a href="PoliceHome.jsp">Police Panel</a>
+            <a href="Settings.jsp">Settings</a>
+            <a href="Logout.jsp">Logout</a>
         </div>
     </div>
-</div>
 
-<script>
-    function showUserInfo(fullName, userName, mobile, profileImg) {
-        const imgEl = document.getElementById("modalProfileImg");
-        if(profileImg && profileImg !== "") {
-            imgEl.src = "data:image/jpeg;base64," + profileImg;
-            imgEl.style.display = "block";
+    <div class="content-box">
+        <h2>Investigative Case Status Management</h2>
+        
+        <% if(!feedbackMessage.isEmpty()){ %>
+            <p style="color: blue; font-weight: bold; text-align: center; background: #e2e3e5; padding: 10px; border-radius: 5px;"><%= feedbackMessage %></p>
+        <% } %>
+
+        <%
+        if (crimeList != null && !crimeList.isEmpty()) {
+            for (Map<String,Object> crime : crimeList) {
+                String currentStatus = (String) crime.get("status");
+                String upgradedByStr = (String) crime.get("upgradedBy");
+                
+                String badgeClass = "badge-pending";
+                String displayStatus = "Pending";
+                
+                if("Ongoing".equalsIgnoreCase(currentStatus) || "Under Investigation".equalsIgnoreCase(currentStatus)) {
+                    badgeClass = "badge-ongoing";
+                    displayStatus = "Under Investigation";
+                }
+                if("Resolved".equalsIgnoreCase(currentStatus)) {
+                    badgeClass = "badge-resolved";
+                    displayStatus = "Resolved";
+                }
+        %>
+        
+        <div class="crime-container">
+            <% String profileImg = (String) crime.get("profileImg"); %>
+            <% if (profileImg != null && !profileImg.isEmpty()) { %>
+                <img src="data:image/jpeg;base64,<%= profileImg %>" class="profile-image">
+            <% } else { %>
+                <img src="images/default.png" class="profile-image">
+            <% } %>
+
+            <h3><%= crime.get("displayName") %></h3>
+            <p><strong>Reporter Contact Mobile:</strong> <%= crime.get("mobileNo") %></p>
+            <p><strong>Category:</strong> <%= crime.get("category") %></p>
+            <p><strong>Incident Location:</strong> <%= crime.get("fullLocation") %></p>
+            <p><strong>Incident Date:</strong> <%= crime.get("date") %></p>
+            <p><strong>Details:</strong> <%= crime.get("description") %></p>
+            
+            <p><strong>Current Status:</strong> 
+                <span class="status-badge <%= badgeClass %>"><%= displayStatus %></span>
+            </p>
+
+            <div class="meta-info">
+                <strong>Vetted By Admin:</strong> <%= crime.get("acceptedBy") %> | 
+                <strong>Upgraded By:</strong> <%= (upgradedByStr != null && !upgradedByStr.isEmpty()) ? upgradedByStr : "No Officer Assigned Yet" %>
+            </div>
+
+            <% String demoImg = (String) crime.get("demoImg"); %>
+            <%
+String mediaData = (String) crime.get("mediaData");
+String mediaType = (String) crime.get("mediaType");
+
+if (mediaData != null && !mediaData.isEmpty()) {
+
+    if (mediaType != null && mediaType.startsWith("image/")) {
+%>
+
+        <img src="data:<%=mediaType%>;base64,<%=mediaData%>" class="crime-image">
+
+<%
+    } else if (mediaType != null && mediaType.startsWith("video/")) {
+%>
+
+        <video class="crime-video" controls width="350">
+            <source src="data:<%=mediaType%>;base64,<%=mediaData%>" type="<%=mediaType%>">
+            Your browser does not support the video tag.
+        </video>
+
+<%
+    } else {
+%>
+
+        <p><i>Unsupported media type.</i></p>
+
+<%
+    }
+
+} else {
+%>
+
+    <p><i>No media uploaded.</i></p>
+
+<%
+}
+%>
+
+            <div class="btn-group">
+                <form method="post" style="margin:0;">
+                    <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
+                    <input type="hidden" name="newStatus" value="Pending">
+                    <button type="submit" class="status-btn p-btn">Set Pending</button>
+                </form>
+                
+                <form method="post" style="margin:0;">
+                    <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
+                    <input type="hidden" name="newStatus" value="Under Investigation">
+                    <button type="submit" class="status-btn o-btn">Set Under Investigation</button>
+                </form>
+                
+                <form method="post" style="margin:0;">
+                    <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
+                    <input type="hidden" name="newStatus" value="Resolved">
+                    <button type="submit" class="status-btn r-btn">Set Resolved</button>
+                </form>
+            </div>
+        </div>
+
+        <%
+            }
         } else {
-            imgEl.src = "images/default.png";
-            imgEl.style.display = "block";
+        %>
+            <p style="text-align:center; color:#666; font-size:16px;">No approved case records are available for your regional posting.</p>
+        <%
         }
-        document.getElementById("modalFullName").innerText = "Full Name: " + fullName;
-        document.getElementById("modalUsername").innerText = "Username: " + userName;
-        document.getElementById("modalMobile").innerText = "Mobile No: " + mobile;
-        document.getElementById("userModal").style.display = "flex";
-    }
+        %>
+    </div>
 
-    function closeModal() {
-        document.getElementById("userModal").style.display = "none";
-    }
-
-    function toggleMenu() {
-        document.getElementById("dropdownMenu").classList.toggle("show");
-    }
-</script>
+    <script>
+        function toggleMenu() {
+            document.getElementById("dropdownMenu").classList.toggle("show");
+        }
+        window.onclick = function(event) {
+            if (!event.target.matches('.menu-icon')) {
+                var dropdown = document.getElementById("dropdownMenu");
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        };
+    </script>
 </body>
 </html>

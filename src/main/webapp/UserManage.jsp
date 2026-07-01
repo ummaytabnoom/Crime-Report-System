@@ -314,7 +314,7 @@ if (!isAdmin) {
     </div>
         
     <div class="top-right-buttons">
-        <a href="UserHome.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">Dashboard</a>
         <a href="MyReports.jsp">My Reports</a>
         <a href="ReportSub.jsp">Report Crime</a>
     </div>

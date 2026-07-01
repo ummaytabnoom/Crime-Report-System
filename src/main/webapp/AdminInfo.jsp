@@ -2,8 +2,15 @@
 <%@ page import="java.sql.*, java.util.*, java.io.*, java.util.Base64" %>
 <%
 String currentUser = (String) session.getAttribute("username");
-String message = "";
+String userRole = (String) session.getAttribute("userRole");
+boolean isAdmin = "admin".equals(userRole);
+boolean isPolice = "police".equalsIgnoreCase(userRole);
+String username = (String) session.getAttribute("username");
+
 byte[] imageBytes = null;
+List<Map<String, Object>> crimeList = new ArrayList<>();
+String message = ""; // FIX: Declared the missing message variable here
+
 
 // Load current user's profile picture
 if (currentUser != null) {
@@ -57,7 +64,6 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
     <meta charset="UTF-8">
     <title>Admin Users</title>
     <style>
-        /* Keep your existing CSS unchanged */
         body {
             margin: 0;
             padding: 0;
@@ -113,7 +119,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
         .top-right-buttons {
             position: absolute;
             top: 30px;
-            left: 70%;
+            left: 80%;
             transform: translateX(0%);
         }
 
@@ -181,7 +187,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             color: white;
             letter-spacing: 0.5px;
         }
-         .search-bar { text-align:center; margin-bottom:20px; }
+        .search-bar { text-align:center; margin-bottom:20px; }
         .search-bar input[type="text"] { width:250px; padding:8px; border:1px solid #ccc; border-radius:5px; }
         .search-bar button { padding:8px 15px; border:none; border-radius:5px; background-color:#FF8C00; color:#fff; cursor:pointer; }
         .search-bar button:hover { background-color:#e67300; }
@@ -194,8 +200,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
 <div class="navbar">
 	<div class="top-right-buttons">
-        <a href="PoliceHome.jsp">Police Dashboard</a>
-        <a href="UserHome.jsp">User Dashboard</a>
+        <a href="UserHome.jsp">Dashboard</a>
     </div>
 
     <div class="user-info">
@@ -207,14 +212,26 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
         <span class="user-name"><%= currentUser %></span>
     </div>
 
+
     <div class="menu-icon" onclick="toggleMenu()">☰</div>
     <div id="dropdownMenu" class="dropdown">
+         <% if(isAdmin){ %>
+            <a href="AdminsHome.jsp">Admin Panel</a>
+        <% } %>
+        <% if(isPolice){ %>
+            <a href="PoliceHome.jsp">Police Panel</a>
+        <% } %>
+        
         <a href="Settings.jsp">Settings</a>
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>
 
 <div class="content-box">
+    <% if(message != null && !message.isEmpty()) { %>
+        <div style="color: red; text-align: center; margin-bottom: 10px;"><%= message %></div>
+    <% } %>
+
     <h2>All Admin Users</h2>
     <div class="search-bar">
         <form method="get">
