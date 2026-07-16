@@ -151,6 +151,7 @@
             } else {
                 crime.put("mediaData", "");
             }
+
             // ================= BACKEND INVESTIGATING REPORTER CONTACTS =================
             PreparedStatement userStmt = conn.prepareStatement(
                     "SELECT PROFILE_PICTURE, MOBILE, FULL_NAME, USER_NAME " +
@@ -164,22 +165,25 @@
             String fullNameReal = "";
             String userNameReal = "";
 
-            if(userRs.next()) {
+            if (userRs.next()) {
                 byte[] profileBytes = userRs.getBytes("PROFILE_PICTURE");
-                if(profileBytes != null) {
+
+                if (profileBytes != null) {
                     profileImg = Base64.getEncoder().encodeToString(profileBytes);
                 }
+
                 mobileNo = userRs.getString("MOBILE");
                 fullNameReal = userRs.getString("FULL_NAME");
                 userNameReal = userRs.getString("USER_NAME");
             }
+
             userRs.close();
             userStmt.close();
 
             crime.put("profileImg", profileImg);
             crime.put("mobileNo", mobileNo);
-            crime.put("realFullName", fullNameReal);
-            crime.put("realUsername", userNameReal);
+            crime.put("fullName", fullNameReal);
+            crime.put("userName", userNameReal);
             crime.put("hideIdentity", hideIdentity);
 
             if ("YES".equalsIgnoreCase(hideIdentity)) {
