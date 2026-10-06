@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
     // --- Get current user info for navbar ---
@@ -23,8 +24,7 @@ if (!isAdmin) {
 
     if (currentUserId != null) {
         try {
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+Connection conn = DBConnection.getConnection();
 
             String sql = "SELECT USER_NAME, PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -63,8 +63,7 @@ if (!isAdmin) {
         int id = Integer.parseInt(request.getParameter("id"));
 
         try {
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+Connection conn = DBConnection.getConnection();
 
             if ("update".equals(action)) {
                 String newRole = request.getParameter("newRole");
@@ -295,10 +294,11 @@ if (!isAdmin) {
             background-color: #0056b3;
         }
     </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="navbar-title">
@@ -348,8 +348,7 @@ if (!isAdmin) {
     ResultSet rs = null;
 
     try {
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+conn = DBConnection.getConnection();
 
         String sql;
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {

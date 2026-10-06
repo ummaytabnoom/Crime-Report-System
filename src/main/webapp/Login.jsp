@@ -2,15 +2,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, java.util.*" %>
 <%@ page import="utils.PasswordUtil" %>
+<%@ page import="utils.DBConnection" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in - Crime Report System</title>
-    <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="assets/js/theme.js"></script>
+        <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
 <div class="crs-auth-page">
@@ -74,8 +74,7 @@
                 PreparedStatement pstmt = null;
                 ResultSet rs = null;
                 try {
-                    Class.forName("oracle.jdbc.driver.OracleDriver");
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+conn = DBConnection.getConnection();
                     String sql = "SELECT * FROM REGISTERED_USERS WHERE USER_NAME = ? AND EMAIL = ? AND PASSWORD = ? ";
                     pstmt = conn.prepareStatement(sql);
                     pstmt.setString(1, username.trim());
@@ -87,7 +86,15 @@
                         session.setAttribute("username", username);
                         String role = rs.getString("ROLE");
                         session.setAttribute("userRole", role);
-                        String redirectPage = "UserHome.jsp";
+                        String normalizedRole = role == null ? "public" : role.trim().toLowerCase(java.util.Locale.ROOT);
+                        String redirectPage;
+                        if ("admin".equals(normalizedRole)) {
+                            redirectPage = "AdminsHome.jsp";
+                        } else if ("police".equals(normalizedRole)) {
+                            redirectPage = "PoliceHome.jsp";
+                        } else {
+                            redirectPage = "UserHome.jsp";
+                        }
             %>
                         <div class="crs-message success" style="margin-top:16px;">Login successful. Redirecting to your dashboard...</div>
                         <script>setTimeout(function(){ window.location.href='<%= redirectPage %>'; }, 300);</script>

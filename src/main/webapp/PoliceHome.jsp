@@ -1,224 +1,85 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
-<%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="utils.DBConnection" %>
 <%
     String currentUser = (String) session.getAttribute("username");
-    byte[] imageBytes = null;
-    try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
-
-        String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
-        PreparedStatement stmt = conn.prepareStatement(sql);
-        stmt.setString(1, currentUser);
-        ResultSet rs = stmt.executeQuery();
-
-        if (rs.next()) {
-            Blob blob = rs.getBlob("PROFILE_PICTURE");
-            if (blob != null) {
-                InputStream is = blob.getBinaryStream();
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-                imageBytes = os.toByteArray();
-                is.close();
-            }
-        }
-
-        rs.close();
-        stmt.close();
-        conn.close();
-    } catch (Exception e) {
-        e.printStackTrace();
+    String role = (String) session.getAttribute("userRole");
+    if (!"police".equalsIgnoreCase(role)) {
+        String target = "admin".equalsIgnoreCase(role) ? "AdminsHome.jsp" : "UserHome.jsp";
+        response.sendRedirect(target);
+        return;
     }
+
+    int totalReports = 0, activeReports = 0, resolvedReports = 0;
+    try (Connection conn = DBConnection.getConnection()) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM REPORTED_CRIMES")) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) totalReports = rs.getInt(1);
+        }
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM REPORTED_CRIMES WHERE UPPER(NVL(STATUS,'PENDING')) NOT IN ('RESOLVED','CLOSED')")) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) activeReports = rs.getInt(1);
+        }
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM REPORTED_CRIMES WHERE UPPER(STATUS) IN ('RESOLVED','CLOSED')")) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) resolvedReports = rs.getInt(1);
+        }
+    } catch (Exception ignored) {}
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Police Dashboard</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-image: url("images/adminHome.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .navbar {
-            background-color: #FF8C00;
-            color: white;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-
-        .navbar-title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            display: block;
-        }
-
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-
-        .show {
-            display: flex;
-        }
-        
-         .top-right-buttons {
-            position: absolute;
-            top: 20px;
-            left: 87%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-
-        .top-right-buttons a {
-            padding: 10px 15px;
-            background-color: #005F5F;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-
-        .content {
-            padding: 40px;
-            text-align: center;
-        }
-        
-        h2 {
-        color: #222;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 25px;
-        }
-            .action-button {
-        display: inline-block;
-        padding: 30px 70px;
-        background-color: #005F5F;
-        color: white;
-        text-decoration: none;
-        border-radius: 80px;
-        font-weight: bold;
-        text-align: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .action-button:hover {
-        background-color: #008080; /* lighter shade */
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    }
-    </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Police Dashboard - Crime Report System</title>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
-
-    <!-- Navigation Bar -->
-    <div class="navbar">
-         <div class="user-info">
-        <% if (imageBytes != null) { %>
-            <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" alt="Profile Picture" />
-        <% } else { %>
-            <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
-        <% } %>
-        <span class="user-name"><%= currentUser %></span>
-    </div>
-        <div class="menu-icon" onclick="toggleMenu()">☰</div>
-
-        <!-- Dropdown menu -->
-        <div id="dropdownMenu" class="dropdown">
-            <a href="Settings.jsp">Settings</a>
-            <a href="Logout.jsp">Logout</a>
-        </div>
-    </div>
-    
-    <div class="top-right-buttons">
-        <a href="UserHome.jsp">Dashboard</a>
-        
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+<main class="crs-page">
+  <section class="crs-content crs-container" style="padding-top:34px">
+    <div class="crs-page-title">
+      <div><h1>Police dashboard</h1><p>Review reported incidents, update case progress, and access verified records.</p></div>
+      <span class="crs-badge crs-badge-info">Police • <%= currentUser %></span>
     </div>
 
-    <!-- Main Content -->
-    <div class="content">
-        <h2>Welcome <span class="user-name" style="color: black;"><%= currentUser %></span> !</h2>
-
-       
+    <div class="crs-stat-grid">
+      <article class="crs-card crs-stat"><div class="crs-stat-label">All reports</div><div class="crs-stat-value"><%= totalReports %></div><span style="color:var(--text-muted);font-size:12px;">Reported incidents in the system</span></article>
+      <article class="crs-card crs-stat"><div class="crs-stat-label">Active cases</div><div class="crs-stat-value"><%= activeReports %></div><span style="color:var(--text-muted);font-size:12px;">Cases needing attention</span></article>
+      <article class="crs-card crs-stat"><div class="crs-stat-label">Resolved</div><div class="crs-stat-value"><%= resolvedReports %></div><span style="color:var(--text-muted);font-size:12px;">Closed or resolved cases</span></article>
+      <article class="crs-card crs-stat"><div class="crs-stat-label">Your workspace</div><div class="crs-stat-value">24/7</div><span style="color:var(--text-muted);font-size:12px;">Access from any device</span></article>
     </div>
-    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-    <a href="StateUpgrade.jsp" class="action-button">Upgrade Report Status</a>
-    <a href="AdminInfo.jsp" class="action-button">All Admin Information</a>
-    
-    <a href="PoliceInfo.jsp" class="action-button">All Police Information</a>
-</div>
-    
-    <!-- JavaScript -->
-    <script>
-        function toggleMenu() {
-            document.getElementById("dropdownMenu").classList.toggle("show");
-        }
 
-        // Close the dropdown when clicking outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.menu-icon')) {
-                var dropdown = document.getElementById("dropdownMenu");
-                if (dropdown && dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        };
-    </script>
+    <div class="crs-grid-3" style="margin-top:18px;">
+      <article class="crs-card crs-feature-card">
+        <div class="crs-feature-icon">▤</div><h3>Crime reports</h3>
+        <p>Browse reported incidents and review the information available to authorized police personnel.</p>
+        <a class="crs-btn crs-btn-primary" style="margin-top:18px;" href="UpdateCrime.jsp">Open reports</a>
+      </article>
+      <article class="crs-card crs-feature-card">
+        <div class="crs-feature-icon">↗</div><h3>Status updates</h3>
+        <p>Move cases through the workflow and record the officer responsible for an update.</p>
+        <a class="crs-btn crs-btn-outline" style="margin-top:18px;" href="StateUpgrade.jsp">Update status</a>
+      </article>
+      <article class="crs-card crs-feature-card">
+        <div class="crs-feature-icon">♧</div><h3>Police directory</h3>
+        <p>Find police personnel and official profile information available in the system.</p>
+        <a class="crs-btn crs-btn-outline" style="margin-top:18px;" href="PoliceInfo.jsp">Open directory</a>
+      </article>
+    </div>
 
+    <section class="crs-card" style="padding:24px;margin-top:18px;">
+      <div class="crs-page-title" style="margin-bottom:0;">
+        <div><h2 style="margin:0;font-size:19px;">Quick actions</h2><p>Common tasks for your shift.</p></div>
+        <a class="crs-btn crs-btn-ghost" href="Settings.jsp">Settings →</a>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
+        <a class="crs-btn crs-btn-primary" href="UpdateCrime.jsp">Review incidents</a>
+        <a class="crs-btn crs-btn-outline" href="StateUpgrade.jsp">Change report status</a>
+        <a class="crs-btn crs-btn-outline" href="PoliceInfo.jsp">Search personnel</a>
+        <a class="crs-btn crs-btn-ghost" href="Notification.jsp">Notifications</a>
+      </div>
+    </section>
+  </section>
+</main>
 </body>
 </html>

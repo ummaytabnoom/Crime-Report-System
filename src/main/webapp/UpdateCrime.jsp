@@ -2,6 +2,7 @@
 <%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List, java.util.Map, java.util.ArrayList, java.util.HashMap" %>
+<%@ page import="utils.DBConnection" %>
 <%
     // Get user data from session
     Integer currentUserId = (Integer) session.getAttribute("userId");
@@ -22,9 +23,7 @@
     ResultSet rs = null;
 
     try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+conn = DBConnection.getConnection();
 
         // Use the userId from the session to get the profile picture.
         stmt = conn.prepareStatement(
@@ -259,10 +258,11 @@
             color: black;
         }
     </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 <div class="navbar">
     <div class="user-info">
         <% if (imageBytes != null) { %>

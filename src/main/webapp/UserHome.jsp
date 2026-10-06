@@ -2,11 +2,14 @@
 <%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List, java.util.Map, java.util.ArrayList, java.util.HashMap" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
     String currentUser = (String) session.getAttribute("username");
     Integer currentUserId = (Integer) session.getAttribute("userId");
     String userRole = (String) session.getAttribute("userRole");
+    if ("admin".equalsIgnoreCase(userRole)) { response.sendRedirect("AdminsHome.jsp"); return; }
+    if ("police".equalsIgnoreCase(userRole)) { response.sendRedirect("PoliceHome.jsp"); return; }
 
     boolean isAdmin = "admin".equals(userRole);
     boolean isPolice = "police".equals(userRole);
@@ -23,12 +26,7 @@
         PreparedStatement updatePs = null;
 
         try {
-            Class.forName("oracle.jdbc.OracleDriver");
-
-            updateConn = DriverManager.getConnection(
-                    "jdbc:oracle:thin:@localhost:1521:XE",
-                    "system",
-                    "a12345");
+updateConn = DBConnection.getConnection();
 
             // Updates the status and logs which police user performed the upgrade action
             updatePs = updateConn.prepareStatement(
@@ -53,11 +51,7 @@
     List<Map<String,Object>> crimeList = new ArrayList<>();
 
     try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        Connection conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:XE",
-                "system",
-                "a12345");
+Connection conn = DBConnection.getConnection();
 
         // ================= CURRENT USER PROFILE DATA =================
         PreparedStatement stmt = conn.prepareStatement(
@@ -407,11 +401,12 @@ h2{
     color:black;
 }
 </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="user-info">

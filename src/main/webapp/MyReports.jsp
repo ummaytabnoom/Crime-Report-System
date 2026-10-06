@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ page import="java.sql.*, java.io.*, java.util.*, java.util.Base64" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
 String currentUser = (String) session.getAttribute("username");
@@ -29,12 +30,7 @@ if(action != null){
     response.setContentType("text/plain");
 
     try{
-        Class.forName("oracle.jdbc.OracleDriver");
-        conn = DriverManager.getConnection(
-            "jdbc:oracle:thin:@localhost:1521:XE",
-            "system",
-            "a12345"
-        );
+conn = DBConnection.getConnection();
         
         conn.setAutoCommit(true);
 
@@ -182,12 +178,7 @@ if(action != null){
    INITIAL DATA LOAD LAYOUT
 ========================================================= */
 try {
-    Class.forName("oracle.jdbc.OracleDriver");
-    conn = DriverManager.getConnection(
-        "jdbc:oracle:thin:@localhost:1521:XE",
-        "system",
-        "a12345"
-    );
+conn = DBConnection.getConnection();
 
     /* LOAD CURRENT USER PROFILE PICTURE */
     PreparedStatement stmt = conn.prepareStatement(
@@ -458,11 +449,12 @@ h2{
     margin-top: 10px;
 }
 </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="user-info">

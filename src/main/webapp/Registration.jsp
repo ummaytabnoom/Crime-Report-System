@@ -4,6 +4,7 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, org.apache.commons.io.output.*" %>
 <%@ page import="java.util.*, java.security.MessageDigest" %>
 <%@ page import="utils.PasswordUtil" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
 String message = "";
@@ -69,6 +70,12 @@ if (ServletFileUpload.isMultipartContent(request)) {
             }
         }
 
+        // Server-side role normalization: registration can create only public or police accounts.
+        registeredRole = registeredRole == null ? "public" : registeredRole.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!"police".equals(registeredRole)) {
+            registeredRole = "public";
+        }
+
         // ----------- VALIDATE USERNAME DIGITS -------------
         int digitCount = 0;
         for (char c : userName.toCharArray()) {
@@ -82,9 +89,7 @@ if (ServletFileUpload.isMultipartContent(request)) {
         } else {
             // Hash password
             String hashedPassword = PasswordUtil.hashPassword(password);
-
-            Class.forName("oracle.jdbc.OracleDriver");
-            conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
 
             // ----------- POLICE ID & INFORMATION VALIDATION -------------
@@ -210,7 +215,9 @@ if (ServletFileUpload.isMultipartContent(request)) {
                             session.setAttribute("username", userName);
                             session.setAttribute("userRole", registeredRole);
 
-                            response.sendRedirect("UserHome.jsp");
+                            String normalizedRole = registeredRole == null ? "public" : registeredRole.toLowerCase(java.util.Locale.ROOT);
+                            String redirectPage = "police".equals(normalizedRole) ? "PoliceHome.jsp" : "UserHome.jsp";
+                            response.sendRedirect(redirectPage);
                             return;
                         } else {
                             message = "<p class='message error'>Registration failed!</p>";
@@ -240,9 +247,8 @@ if (ServletFileUpload.isMultipartContent(request)) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Create account - Crime Report System</title>
-<link rel="stylesheet" href="assets/css/app.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="assets/js/theme.js"></script>
+    <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
 <div class="crs-auth-page">

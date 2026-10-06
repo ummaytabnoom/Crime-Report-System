@@ -7,6 +7,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.util.Base64" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
     String currentUser = (String) session.getAttribute("username");
@@ -25,12 +26,7 @@
     ResultSet rs = null;
 
     try{
-        Class.forName("oracle.jdbc.OracleDriver");
-        conn = DriverManager.getConnection(
-            "jdbc:oracle:thin:@localhost:1521:XE",
-            "system",
-            "a12345"
-        );
+conn = DBConnection.getConnection();
 
         /* =========================================================
            HANDLE POST REQUESTS
@@ -407,10 +403,11 @@ h2{
 .delete-btn{ background:#DC3545; }
 .delete-btn:hover{ background:#b52a37; }
 </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="user-info">

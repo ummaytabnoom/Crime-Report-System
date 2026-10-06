@@ -1,9 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.sql.*" %>
-<%@ page import="oracle.jdbc.OracleDriver" %>
 <%@ page import="java.util.*" %>         
 <%@ page import="java.io.*" %>          
-<%@ page import="java.util.Base64" %>   
+<%@ page import="java.util.Base64" %>
+<%@ page import="utils.DBConnection" %>   
 
 <%
 String message = "";
@@ -23,11 +23,8 @@ String currentMobile = "";
 
 // --- 1. FETCH PROFILE DATA AND PICTURE ---
 try {
-    Class.forName("oracle.jdbc.OracleDriver");
-    
-    // Use one connection block for both fetching profile data and picture
-    try (Connection conn = DriverManager.getConnection(
-            "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+// Use one connection block for both fetching profile data and picture
+    try (Connection conn = DBConnection.getConnection();
          PreparedStatement stmt = conn.prepareStatement(
             "SELECT PROFILE_PICTURE, FULL_NAME, EMAIL, MOBILE FROM REGISTERED_USERS WHERE ID=?")) {
         
@@ -74,11 +71,8 @@ if ("POST".equalsIgnoreCase(request.getMethod())) {
         message = "Error: All fields are required.";
     } else {
         try {
-            Class.forName("oracle.jdbc.OracleDriver");
-            
-            // Use a separate connection for the update for clarity
-            try (Connection conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345")) {
+// Use a separate connection for the update for clarity
+            try (Connection conn = DBConnection.getConnection()) {
 
                 String sql = "UPDATE REGISTERED_USERS SET FULL_NAME = ?, EMAIL = ?, MOBILE = ? WHERE ID = ?";
                 
@@ -268,10 +262,11 @@ if ("POST".equalsIgnoreCase(request.getMethod())) {
             background-color: #004040;
         }
     </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 <div class="navbar">
     <div class="user-info">
         <% if (imageBytes != null) { %>

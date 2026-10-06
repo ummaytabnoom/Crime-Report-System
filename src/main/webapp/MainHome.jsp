@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
     String currentUser = (String) session.getAttribute("username");
+    String currentRole = (String) session.getAttribute("userRole");
+    String dashboard = "admin".equalsIgnoreCase(currentRole) ? "AdminsHome.jsp" : ("police".equalsIgnoreCase(currentRole) ? "PoliceHome.jsp" : "UserHome.jsp");
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,8 +10,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crime Report System</title>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
 <div class="crs-page">
@@ -29,7 +30,7 @@
                 <a class="crs-btn crs-btn-outline" href="Login.jsp">Login</a>
                 <a class="crs-btn crs-btn-primary" href="Registration.jsp">Register</a>
             <% } else { %>
-                <a class="crs-btn crs-btn-primary" href="UserHome.jsp">Dashboard</a>
+                <a class="crs-btn crs-btn-primary" href="<%= dashboard %>">Dashboard</a>
                 <a class="crs-btn crs-btn-outline" href="Logout.jsp">Logout</a>
             <% } %>
         </div>
@@ -43,7 +44,7 @@
                     <h1>Report crimes.<br><span class="crs-gradient-text">Build safer communities.</span></h1>
                     <p>Share incidents securely, track progress, and help authorities take action. Every report gives your community a better chance to respond.</p>
                     <div class="crs-hero-actions">
-                        <a class="crs-btn crs-btn-primary" href="<%= currentUser == null ? "Login.jsp" : "ReportSub.jsp" %>">Report a Crime →</a>
+                        <a class="crs-btn crs-btn-primary" href="<%= currentUser == null ? "Login.jsp" : ("public".equalsIgnoreCase(currentRole) ? "ReportSub.jsp" : dashboard) %>">Report a Crime →</a>
                         <a class="crs-btn crs-btn-outline" href="#features">Learn More</a>
                     </div>
                     <div class="crs-trust-row">

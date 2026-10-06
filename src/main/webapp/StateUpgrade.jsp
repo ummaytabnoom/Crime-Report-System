@@ -2,6 +2,7 @@
 <%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List, java.util.Map, java.util.ArrayList, java.util.HashMap" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
     // Ensure only logged-in police officers can access this management action page
@@ -22,11 +23,7 @@
     ResultSet rs = null;
 
     try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:XE",
-                "system",
-                "a12345");
+conn = DBConnection.getConnection();
         
         // Enforce auto-commit so Oracle saves changes instantly
         conn.setAutoCommit(true);
@@ -385,10 +382,11 @@
             margin-top: 10px;
         }
     </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
     <div class="navbar">
         <div class="user-info">

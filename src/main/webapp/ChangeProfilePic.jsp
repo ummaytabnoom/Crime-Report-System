@@ -1,10 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.sql.*" %>
-<%@ page import="oracle.jdbc.OracleDriver" %>
 <%@ page import="java.util.*" %>         
 <%@ page import="java.io.*" %>          
 <%@ page import="java.util.Base64" %>   
-<%@ page import="utils.PasswordUtil" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
+<%@ page import="utils.PasswordUtil" %>
+<%@ page import="utils.DBConnection" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
 
 <%
     String message = "";
@@ -30,7 +30,7 @@
                 if (!item.isFormField() && item.getFieldName().equals("profilePic")) {
                     byte[] fileBytes = item.get();
                     
-                    try (Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+                    try (Connection conn = DBConnection.getConnection();
                          PreparedStatement stmt = conn.prepareStatement("UPDATE REGISTERED_USERS SET PROFILE_PICTURE = ? WHERE ID = ?")) {
                         stmt.setBytes(1, fileBytes);
                         stmt.setInt(2, currentUserId);
@@ -47,8 +47,7 @@
     // 3. Fetch Profile Picture
     byte[] imageBytes = null;
     try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        try (Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?")) {
             stmt.setInt(1, currentUserId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -241,10 +240,11 @@
             background-color: #004040;
         }
     </style>
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script src="assets/js/theme.js"></script>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 <body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="user-info">
