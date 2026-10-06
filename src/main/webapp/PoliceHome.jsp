@@ -161,8 +161,10 @@
         box-shadow: 0 6px 12px rgba(0,0,0,0.3);
     }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
     <!-- Navigation Bar -->
     <div class="navbar">

@@ -1,165 +1,86 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    String currentUser = (String) session.getAttribute("username");
+%>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home Page</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-image: url("images/HomePagePic.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        nav {
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-        }
-
-        nav .nav-left h2 {
-            margin: 0;
-            color: #fff;
-        }
-
-        nav .nav-right a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            background-color: #005F5F;
-            transition: background 0.3s;
-        }
-
-        nav .nav-right a:hover {
-            background-color: #0056b3;
-        }
-
-        .login-icon {
-            background-image: url("images/login.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            width: 30px;
-            height: 30px;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 5px;
-            border-radius: 50%;
-        }
-
-       .content {
-    text-align: center;
-    position: relative;
-    top: 0;
-    transform: none;
-    color: #FF8C00;
-}
-
-
-.info-section {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 30px;
-    flex-wrap: wrap;
-}
-
-.info-card {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 20px 25px;
-    border-radius: 12px;
-    width: 250px;
-    color: #fff;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    transition: transform 0.3s ease, background 0.3s ease;
-    border: 1px solid #FF8C00;
-}
-
-.info-card:hover {
-    transform: translateY(-8px);
-    background: rgba(255, 140, 0, 0.8);
-    color: #000;
-}
-
-.info-icon {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Report System</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
-<body style="font-family: Arial; background-color: #FFD580; padding: 40px;">
-    <!-- Navbar -->
-    <nav>
-        <div class="nav-left">
-            <h2>Crime Report System</h2>
+<body class="crs-modern">
+<div class="crs-page">
+    <header class="crs-nav">
+        <a class="crs-brand" href="MainHome.jsp">
+            <span class="crs-brand-mark">◈</span>
+            <span>Crime Report System</span>
+        </a>
+        <nav class="crs-nav-links" aria-label="Main navigation">
+            <a href="#home">Home</a>
+            <a href="#mission">About</a>
+            <a href="#features">Features</a>
+        </nav>
+        <div class="crs-nav-actions">
+            <button class="crs-btn crs-theme-toggle" type="button" onclick="CRSTheme.toggle()" aria-label="Toggle theme"><span data-theme-icon>☾</span></button>
+            <% if (currentUser == null) { %>
+                <a class="crs-btn crs-btn-outline" href="Login.jsp">Login</a>
+                <a class="crs-btn crs-btn-primary" href="Registration.jsp">Register</a>
+            <% } else { %>
+                <a class="crs-btn crs-btn-primary" href="UserHome.jsp">Dashboard</a>
+                <a class="crs-btn crs-btn-outline" href="Logout.jsp">Logout</a>
+            <% } %>
         </div>
-        <div class="nav-right">
-          <%String currentUser = (String) session.getAttribute("username");
-          System.out.println(currentUser);
+    </header>
 
-          if (currentUser == null) { %>
-          <a href="Registration.jsp">Registration</a>
-            <a href="Login.jsp">
-                <span class="login-icon"></span> Login
-            </a>
-            <% } 
-            else {
-            	%>
-            	<a href="UserHome.jsp">User Dashboard</a>
-            	<a href="Logout.jsp">
-                <span class="login-icon"></span> Logout</a>
-            <% 
-            }%>
-            
-        </div>
-    </nav>
+    <main id="home">
+        <section class="crs-hero">
+            <div class="crs-container">
+                <div class="crs-hero-content">
+                    <div class="crs-eyebrow">● A safer community starts with reporting</div>
+                    <h1>Report crimes.<br><span class="crs-gradient-text">Build safer communities.</span></h1>
+                    <p>Share incidents securely, track progress, and help authorities take action. Every report gives your community a better chance to respond.</p>
+                    <div class="crs-hero-actions">
+                        <a class="crs-btn crs-btn-primary" href="<%= currentUser == null ? "Login.jsp" : "ReportSub.jsp" %>">Report a Crime →</a>
+                        <a class="crs-btn crs-btn-outline" href="#features">Learn More</a>
+                    </div>
+                    <div class="crs-trust-row">
+                        <div class="crs-trust-item"><span class="crs-trust-icon">✓</span><span><strong>Easy reporting</strong><br>Submit in minutes</span></div>
+                        <div class="crs-trust-item"><span class="crs-trust-icon">↗</span><span><strong>Track progress</strong><br>Stay updated</span></div>
+                        <div class="crs-trust-item"><span class="crs-trust-icon">◆</span><span><strong>Confidential</strong><br>Your data is protected</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <!-- Main Content -->
-    <div class="content">
-        <h1>Let’s Build Safer Journeys!</h1>
-<p>Share your road experiences — your voice helps us take action and protect our community.</p>
-
-
-<h2 style="text-align: center; color: #FF8C00; margin-top: 40px; font-size: 32px; text-shadow: 1px 1px 4px #000;">
-    The Vision Behind the site !?
-</h2>
-
-
-<div class="info-section">
-    <div class="info-card">
-        <div class="info-icon">🔍</div>
-        <h3>Report Incidents</h3>
-        <p>Your report could stop the next crime.</p>
-    </div>
-    <div class="info-card">
-        <div class="info-icon">✔️</div>
-        <h3>Admin Verified</h3>
-        <p>Each report is carefully reviewed for action.</p>
-    </div>
-    <div class="info-card">
-        <div class="info-icon">👮</div>
-        <h3>Police In Action</h3>
-        <p>We ensure justice by tracking and resolving cases.</p>
-    </div>
+        <section class="crs-section" id="features">
+            <div class="crs-container">
+                <div class="crs-section-header" id="mission">
+                    <h2>Everything you need to report responsibly</h2>
+                    <p>A focused workflow for citizens, police personnel, and administrators.</p>
+                </div>
+                <div class="crs-grid-3">
+                    <article class="crs-card crs-feature-card">
+                        <div class="crs-feature-icon">↗</div>
+                        <h3>Report incidents</h3>
+                        <p>Submit accurate incident details, location information, and supporting evidence through a simple guided form.</p>
+                    </article>
+                    <article class="crs-card crs-feature-card">
+                        <div class="crs-feature-icon">✓</div>
+                        <h3>Verified workflow</h3>
+                        <p>Reports move through review and verification so authorized teams can focus on credible cases.</p>
+                    </article>
+                    <article class="crs-card crs-feature-card">
+                        <div class="crs-feature-icon">◉</div>
+                        <h3>Track progress</h3>
+                        <p>Follow report status and updates from submission through investigation and resolution.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
-
-
-
-    </div>
-
 </body>
 </html>
-

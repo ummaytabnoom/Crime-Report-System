@@ -263,8 +263,10 @@ boolean isPolice = "police".equals(userRole);
         .user-name { font-weight: bold; color: white; font-size: 25px; }
         .error-message { color: #d9534f; font-size: 0.9em; margin-top: 10px; margin-bottom: 10px; display: none; }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
     <div class="navbar">
         <div class="navbar-title">
             <div class="user-info">

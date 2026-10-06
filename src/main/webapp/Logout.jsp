@@ -69,8 +69,10 @@
         }
     
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 <div class="login-wrapper">
 	<div class="logout-container">
    	 <h2>Thank you for your contribution.</h2>

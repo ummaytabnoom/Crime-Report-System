@@ -195,8 +195,10 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
         h2 { text-align:center; margin-bottom:20px; color:#333; }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
 <div class="navbar">
 	<div class="top-right-buttons">

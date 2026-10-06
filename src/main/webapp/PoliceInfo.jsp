@@ -209,8 +209,10 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             line-height: 1.4;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
 <div class="navbar">
     <div class="top-right-buttons">

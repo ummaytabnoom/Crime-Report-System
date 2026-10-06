@@ -241,8 +241,10 @@
             background-color: #004040;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
 <div class="navbar">
     <div class="user-info">

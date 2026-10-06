@@ -97,8 +97,10 @@
             color: red;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
 <nav>
     <div class="nav-left">

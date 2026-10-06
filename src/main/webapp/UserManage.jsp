@@ -295,8 +295,10 @@ if (!isAdmin) {
             background-color: #0056b3;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
 <div class="navbar">
     <div class="navbar-title">

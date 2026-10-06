@@ -204,8 +204,10 @@ boolean isPolice = "police".equals(userRole);
             font-size: 25px;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="assets/js/theme.js"></script>
 </head>
-<body>
+<body class="crs-modern">
 
     <!-- Navbar -->
     <div class="navbar">
