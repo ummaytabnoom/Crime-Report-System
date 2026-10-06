@@ -69,8 +69,9 @@
         }
     
     </style>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
+<body class="crs-modern">
 <div class="login-wrapper">
 	<div class="logout-container">
    	 <h2>Thank you for your contribution.</h2>

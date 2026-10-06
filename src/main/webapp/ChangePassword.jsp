@@ -1,10 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.sql.*" %>
-<%@ page import="oracle.jdbc.OracleDriver" %>
 <%@ page import="java.util.*" %>         
 <%@ page import="java.io.*" %>          
 <%@ page import="java.util.Base64" %>   
-<%@ page import="utils.PasswordUtil" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
+<%@ page import="utils.PasswordUtil" %>
+<%@ page import="utils.DBConnection" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
 
 <%
     String message = "";
@@ -21,11 +21,8 @@
     
     // --- 1. FETCH PROFILE PICTURE (Runs on every page load) ---
     try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        
-        // Using try-with-resources for automatic resource closing
-        try (Connection conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+// Using try-with-resources for automatic resource closing
+        try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                 "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE ID=?")) {
             
@@ -66,11 +63,8 @@
             message = "New password and rewrite password do not match.";
         } else {
             try {
-                Class.forName("oracle.jdbc.OracleDriver");
-                
-                // Using a separate try-with-resources for the update logic
-                try (Connection conn = DriverManager.getConnection(
-                    "jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345")) {
+// Using a separate try-with-resources for the update logic
+                try (Connection conn = DBConnection.getConnection()) {
 
                     // Step A: Hash the user's OLD password input for verification
                     String hashedOldPasswordInput = PasswordUtil.hashPassword(oldPassword);
@@ -287,8 +281,11 @@
             background-color: #004040;
         }
     </style>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
+<body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
     <div class="user-info">

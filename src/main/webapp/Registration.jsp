@@ -4,6 +4,7 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, org.apache.commons.io.output.*" %>
 <%@ page import="java.util.*, java.security.MessageDigest" %>
 <%@ page import="utils.PasswordUtil" %>
+<%@ page import="utils.DBConnection" %>
 
 <%
 String message = "";
@@ -69,6 +70,12 @@ if (ServletFileUpload.isMultipartContent(request)) {
             }
         }
 
+        // Server-side role normalization: registration can create only public or police accounts.
+        registeredRole = registeredRole == null ? "public" : registeredRole.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!"police".equals(registeredRole)) {
+            registeredRole = "public";
+        }
+
         // ----------- VALIDATE USERNAME DIGITS -------------
         int digitCount = 0;
         for (char c : userName.toCharArray()) {
@@ -82,9 +89,7 @@ if (ServletFileUpload.isMultipartContent(request)) {
         } else {
             // Hash password
             String hashedPassword = PasswordUtil.hashPassword(password);
-
-            Class.forName("oracle.jdbc.OracleDriver");
-            conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
 
             // ----------- POLICE ID & INFORMATION VALIDATION -------------
@@ -210,7 +215,9 @@ if (ServletFileUpload.isMultipartContent(request)) {
                             session.setAttribute("username", userName);
                             session.setAttribute("userRole", registeredRole);
 
-                            response.sendRedirect("UserHome.jsp");
+                            String normalizedRole = registeredRole == null ? "public" : registeredRole.toLowerCase(java.util.Locale.ROOT);
+                            String redirectPage = "police".equals(normalizedRole) ? "PoliceHome.jsp" : "UserHome.jsp";
+                            response.sendRedirect(redirectPage);
                             return;
                         } else {
                             message = "<p class='message error'>Registration failed!</p>";
@@ -235,200 +242,85 @@ if (ServletFileUpload.isMultipartContent(request)) {
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Register - Crime Report System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create account - Crime Report System</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-* { box-sizing: border-box; }
-body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: url("images/HomePagePic.jpg") no-repeat center center fixed; background-size: cover; display: flex; flex-direction: column; }
-nav { background-color: rgba(0,0,0,0.7); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-nav h2 { margin:0; color:#fff; font-weight:500; }
-nav .nav-right a { text-decoration:none; color:#fff; background-color:#005F5F; padding:8px 14px; border-radius:5px; margin-left:15px; transition:0.3s; }
-nav .nav-right a:hover { background-color:#007777; }
-.login-wrapper { flex:1; display:flex; justify-content:center; align-items:center; padding:30px; background-color: rgba(255,255,255,0.2); }
-.login-box { background:#ffffffd9; padding:40px; border-radius:15px; width:100%; max-width:550px; box-shadow:0px 0px 20px rgba(0,0,0,0.25); margin: 20px 0;}
-.login-box h2 { text-align:center; color:#222; margin-bottom:25px;}
-label { font-weight:600;color:#333; display: block; margin-top: 10px;}
-input[type="text"], input[type="email"], input[type="date"], input[type="password"], input[type="number"], select, textarea { width:100%; padding:10px; margin:6px 0 12px 0; border:1px solid #ccc; border-radius:5px;}
-textarea { resize: vertical; height: 60px; font-family: inherit; }
-input[type="file"] { padding:10px; border:1px solid #bbb; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; background-color:white; cursor:pointer; margin-top: 6px;}
-button[type="submit"] { display:block; margin:25px auto 0; padding:12px 25px; background-color:#FF8C00; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;}
-button[type="submit"]:hover { background-color:#e67300; }
-.register-button { margin-top:10px; background-color:#005F5F; padding:10px 20px; font-size:15px; font-weight:500; border:none; color:white; border-radius:5px; cursor:pointer;}
-.register-button:hover { background-color:#004747; }
-.message { text-align:center; margin-top:10px; font-weight:bold; padding: 10px; border-radius: 5px; }
-.message.success { color:green; background: #d4edda; }
-.message.error { color:#721c24; background: #f8d7da; border: 1px solid #f5c6cb; }
-.already-have-account { text-align:center; margin-top:20px; }
-.already-have-account h3 { color:#333; margin-bottom:10px; }
-#error-message { color:#d9534f; font-size:0.9em; margin-top:-10px; margin-bottom:10px; display:none; }
-#policeIdField { display:none; background: rgba(0, 95, 95, 0.08); padding: 15px; border-radius: 8px; border-left: 4px solid #005F5F; margin: 15px 0; }
-
-/* Highly visible block layout for structural requirements notice */
-.mandatory-block {
-    display: none;
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-    padding: 8px 12px;
-    margin: 6px 0 2px 0;
-    border-radius: 5px;
-    font-size: 13px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-</style>
+    <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
-<nav>
-<div class="nav-left"><h2>Crime Report System - Registration</h2></div>
-<div class="nav-right"><a href="MainHome.jsp">Home</a><a href="Login.jsp">Login</a></div>
-</nav>
+<body class="crs-modern">
+<div class="crs-auth-page">
+    <section class="crs-auth-visual">
+        <div class="crs-auth-copy">
+            <a class="crs-brand" href="MainHome.jsp" style="color:#fff; margin-bottom:26px; display:inline-flex;">
+                <span class="crs-brand-mark">◈</span><span>Crime Report System</span>
+            </a>
+            <h1>Create your account and start reporting responsibly.</h1>
+            <p>Use the secure registration flow to create a citizen or police account. Police accounts include additional verification fields.</p>
+        </div>
+    </section>
+    <section class="crs-auth-panel">
+        <div class="crs-auth-box" style="max-width:620px;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="crs-btn crs-theme-toggle" type="button" onclick="CRSTheme.toggle()"><span data-theme-icon>☾</span></button></div>
+            <div class="crs-auth-head">
+                <a class="crs-brand" href="MainHome.jsp"><span class="crs-brand-mark">◈</span><span>Crime Report System</span></a>
+                <h2>Create an account</h2>
+                <p>Enter your details below. Fields marked required must be completed.</p>
+            </div>
+            <%= message %>
+            <form method="post" enctype="multipart/form-data" class="crs-form">
+                <div class="crs-field"><label for="fullName">Full Name</label><input type="text" name="fullName" id="fullName" placeholder="Your full name" required></div>
+                <div class="crs-field"><label for="userName">Username</label><input type="text" name="userName" id="userName" placeholder="Username with 4 digits" required></div>
+                <div class="crs-field"><label for="email">Email</label><input type="email" name="email" id="email" placeholder="you@example.com" required></div>
+                <div class="crs-field"><label for="dob">Date of Birth</label><input type="date" id="dob" name="dob" required onchange="validateDate()"><span id="dob-error" class="error-message"></span></div>
+                <div class="crs-field"><label for="mobile">Mobile Number</label><input type="text" name="mobile" id="mobile" pattern="01[0-9]{9}" placeholder="01XXXXXXXXX" required></div>
+                <div class="crs-field"><label for="roleSelect">Account Role</label><select name="role" id="roleSelect" required onchange="togglePoliceId()"><option value="public">Public</option><option value="police">Police</option></select></div>
 
-<div class="login-wrapper">
-<div class="login-box">
-<h2>User Registration Form</h2>
-<%= message %>
-<form method="post" enctype="multipart/form-data">
-<label for="fullName">Full Name:</label>
-<input type="text" name="fullName" required />
+                <div id="policeIdField" class="crs-card" style="display:none;padding:18px;">
+                    <h3 style="margin:0 0 15px;font-size:15px;">Police verification details</h3>
+                    <div class="crs-form">
+                        <div class="crs-field"><label for="police_id_input">Police ID</label><input type="text" name="police_id" id="police_id_input" placeholder="e.g. 123456789001"></div>
+                        <div class="crs-field"><label for="postName_input">Rank / Designation</label><input type="text" name="postName" id="postName_input" placeholder="e.g. SI, Inspector, Constable"></div>
+                        <div class="crs-field"><label for="selectionYear_input">Selection Year</label><input type="number" name="selectionYear" id="selectionYear_input" min="1950" max="2030" placeholder="e.g. 2018"></div>
+                        <div class="crs-field"><label for="fathersName_input">Father's Name</label><input type="text" name="fathersName" id="fathersName_input"></div>
+                        <div class="crs-field"><label for="mothersName_input">Mother's Name</label><input type="text" name="mothersName" id="mothersName_input"></div>
+                        <div class="crs-field"><label for="maritalStatus_input">Marital Status</label><select name="maritalStatus" id="maritalStatus_input"><option value="Single">Single</option><option value="Married">Married</option></select></div>
+                        <div class="crs-field"><label for="permanentAddress_input">Permanent Address</label><textarea name="permanentAddress" id="permanentAddress_input" placeholder="Must match your file exactly"></textarea></div>
+                        <div class="crs-field"><label for="injuries_input">Medical Records / Injuries</label><input type="text" name="injuries" id="injuries_input" value="None" placeholder="e.g. None, Left Hand Injury"></div>
+                    </div>
+                </div>
 
-<label for="userName">Username(With 4 digits):</label>
-<input type="text" name="userName" required />
-
-<label for="email">Email:</label>
-<input type="email" name="email" required />
-
-<label for="dob">Date of Birth:</label>
-<input type="date" id="dob" name="dob" required onchange="validateDate()" />
-<span id="dob-error" class="error-message"></span>
-
-<label for="mobile">Mobile No:</label>
-<input type="text" name="mobile" pattern="01[0-9]{9}" required />
-
-<label for="role">User Role:</label>
-<select name="role" id="roleSelect" required onchange="togglePoliceId()">
-<option value="public">Public</option>
-<option value="police">Police</option>
-</select>
-
-<div id="policeIdField">
-    <h3 style="margin-top:0; color:#005F5F; border-bottom: 1px solid #005F5F; padding-bottom:5px;">Official Police Credentials</h3>
-    
-    <label for="police_id">Police ID:</label>
-    <input type="text" name="police_id" id="police_id_input" placeholder="e.g. 123456789001" />
-    
-    <label for="postName">Rank / Designation Post:</label>
-    <input type="text" name="postName" id="postName_input" placeholder="e.g. SI, Inspector, Constable" />
-
-    <label for="selectionYear">Selection Year:</label>
-    <input type="number" name="selectionYear" id="selectionYear_input" min="1950" max="2030" placeholder="e.g. 2018" />
-    
-    <label for="fathersName">Father's Name:</label>
-    <input type="text" name="fathersName" id="fathersName_input" />
-    
-    <label for="mothersName">Mother's Name:</label>
-    <input type="text" name="mothersName" id="mothersName_input" />
-    
-    <label for="maritalStatus">Marital Status:</label>
-    <select name="maritalStatus" id="maritalStatus_input">
-        <option value="Single">Single</option>
-        <option value="Married">Married</option>
-    </select>
-    
-    <label for="permanentAddress">Permanent Address:</label>
-    <textarea name="permanentAddress" id="permanentAddress_input" placeholder="Must match your file exactly"></textarea>
-    
-    <label for="injuries">Medical Records / Injuries:</label>
-    <input type="text" name="injuries" id="injuries_input" value="None" placeholder="e.g. None, Left Hand Injury" />
+                <div class="crs-field"><label for="password">Password</label><div style="position:relative;"><input type="password" id="password" name="newpassword" placeholder="Create a strong password" required style="padding-right:44px;"><button type="button" onclick="togglePassword()" aria-label="Show password" style="position:absolute;right:8px;top:3px;width:38px;height:38px;border:0;background:transparent;color:var(--text-muted);cursor:pointer;"><i id="toggleIcon" class="fa-solid fa-eye"></i></button></div></div>
+                <div class="crs-field"><label for="profilePictureInput">Profile Picture</label><div id="pic-mandatory-block" class="mandatory-block crs-message" style="display:none;">Profile picture is required for police personnel registration.</div><input type="file" id="profilePictureInput" name="profilePicture" accept="image/*"></div>
+                <button type="submit">Create account</button>
+            </form>
+            <div class="crs-auth-footer">Already have an account? <a href="Login.jsp">Sign in</a></div>
+        </div>
+    </section>
 </div>
-
-<label for="newpassword">New Password:</label>
-<div style="position: relative;">
-<input type="password" id="password" name="newpassword" required>
-<span onclick="togglePassword()" style="position:absolute; right:10px; top:12px; cursor:pointer; font-size:18px; color:#555;">
-<i id="toggleIcon" class="fa-solid fa-eye"></i></span>
-</div>
-
-<label for="profilePicture">Profile Picture:</label>
-<div id="pic-mandatory-block" class="mandatory-block">
-    <i class="fa-solid fa-triangle-exclamation"></i> Profile picture is required for police personnel registration!
-</div>
-<input type="file" id="profilePictureInput" name="profilePicture" accept="image/*"  />
-
-<button type="submit">Register</button>
-</form>
-
-<div class="already-have-account">
-<h3>Already have an account?</h3>
-<button onclick="location.href='Login.jsp'" class="register-button">Login here</button>
-</div>
-</div>
-</div>
-
 <script>
 function togglePassword() {
-    const pwdField = document.getElementById("password");
-    const toggleIcon = document.getElementById("toggleIcon");
-    if (pwdField.type === "password") { pwdField.type = "text"; toggleIcon.classList.remove("fa-eye"); toggleIcon.classList.add("fa-eye-slash"); }
-    else { pwdField.type = "password"; toggleIcon.classList.remove("fa-eye-slash"); toggleIcon.classList.add("fa-eye"); }
+    const pwdField = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+    if (pwdField.type === 'password') { pwdField.type='text'; toggleIcon.classList.remove('fa-eye'); toggleIcon.classList.add('fa-eye-slash'); }
+    else { pwdField.type='password'; toggleIcon.classList.remove('fa-eye-slash'); toggleIcon.classList.add('fa-eye'); }
 }
-
 function validateDate() {
-    const dobInput = document.getElementById("dob");
-    const dobError = document.getElementById("dob-error");
-    const selectedDate = new Date(dobInput.value);
-    const today = new Date();
-    if (selectedDate > today) {
-        dobInput.setCustomValidity("Invalid date.");
-        dobError.textContent = "Invalid date.";
-        dobError.style.display = "block";
-    } else {
-        dobInput.setCustomValidity("");
-        dobError.textContent = "";
-        dobError.style.display = "none";
-    }
+    const dobInput=document.getElementById('dob'), dobError=document.getElementById('dob-error'), selectedDate=new Date(dobInput.value), today=new Date();
+    if(selectedDate>today){dobInput.setCustomValidity('Invalid date.');dobError.textContent='Invalid date.';dobError.style.display='block';}
+    else{dobInput.setCustomValidity('');dobError.textContent='';dobError.style.display='none';}
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const maxDate = `${yyyy}-${mm}-${dd}`;
-    document.getElementById("dob").setAttribute("max", maxDate);
-    togglePoliceId();
+document.addEventListener('DOMContentLoaded', function(){
+    const today=new Date(), yyyy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
+    document.getElementById('dob').setAttribute('max', yyyy+'-'+mm+'-'+dd); togglePoliceId();
 });
-
-function togglePoliceId() {
-    const roleSelect = document.getElementById("roleSelect");
-    const policeField = document.getElementById("policeIdField");
-    const picInput = document.getElementById("profilePictureInput");
-    const picMandatoryBlock = document.getElementById("pic-mandatory-block");
-    
-    const fields = [
-        "police_id_input", "postName_input", "selectionYear_input", 
-        "fathersName_input", "mothersName_input", "permanentAddress_input", "injuries_input"
-    ];
-    
-    if (roleSelect.value === "police") {
-        policeField.style.display = "block";
-        picMandatoryBlock.style.display = "block"; // Displays notification directly above input field
-        picInput.required = true; 
-        fields.forEach(id => {
-            document.getElementById(id).required = true;
-        });
-    } else {
-        policeField.style.display = "none";
-        picMandatoryBlock.style.display = "none"; // Hides requirement box for regular citizens
-        picInput.required = false; 
-        fields.forEach(id => {
-            document.getElementById(id).required = false;
-        });
-    }
+function togglePoliceId(){
+    const police=document.getElementById('roleSelect').value==='police';
+    const policeField=document.getElementById('policeIdField'), pic=document.getElementById('profilePictureInput'), notice=document.getElementById('pic-mandatory-block');
+    const fields=['police_id_input','postName_input','selectionYear_input','fathersName_input','mothersName_input','permanentAddress_input','injuries_input'];
+    policeField.style.display=police?'block':'none'; notice.style.display=police?'block':'none'; pic.required=police; fields.forEach(function(id){document.getElementById(id).required=police;});
 }
 </script>
 </body>

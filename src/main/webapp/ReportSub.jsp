@@ -8,6 +8,7 @@
 <%@ page import="org.apache.commons.fileupload.FileItem" %>
 <%@ page import="org.apache.commons.fileupload.disk.DiskFileItemFactory" %>
 <%@ page import="org.apache.commons.fileupload.servlet.ServletFileUpload" %>
+<%@ page import="utils.DBConnection" %>
 <%
     // Set encoding
     request.setCharacterEncoding("UTF-8");
@@ -31,8 +32,7 @@ boolean isPolice = "police".equals(userRole);
     // Fetch profile picture and user details
     if (currentUser != null) {
         try {
-            Class.forName("oracle.jdbc.OracleDriver");
-            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+Connection conn = DBConnection.getConnection();
 
             // Fetch profile picture
             String picSql = "SELECT PROFILE_PICTURE, ID, FULL_NAME FROM REGISTERED_USERS WHERE USER_NAME = ?";
@@ -129,8 +129,7 @@ boolean isPolice = "police".equals(userRole);
             }
 
             // Insert into REPORTED_CRIMES
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+Connection conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
 
             String sql = "INSERT INTO REPORTED_CRIMES " +
@@ -263,8 +262,11 @@ boolean isPolice = "police".equals(userRole);
         .user-name { font-weight: bold; color: white; font-size: 25px; }
         .error-message { color: #d9534f; font-size: 0.9em; margin-top: 10px; margin-bottom: 10px; display: none; }
     </style>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
+<body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
     <div class="navbar">
         <div class="navbar-title">
             <div class="user-info">

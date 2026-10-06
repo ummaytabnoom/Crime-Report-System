@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*, java.util.*, java.io.*, java.util.Base64" %>
+<%@ page import="utils.DBConnection" %>
 <%
 String currentUser = (String) session.getAttribute("username");
 String userRole = (String) session.getAttribute("userRole");
@@ -18,8 +19,7 @@ if (currentUser != null) {
     PreparedStatement stmt = null;
     ResultSet rs = null;
     try {
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+conn = DBConnection.getConnection();
 
         String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
         stmt = conn.prepareStatement(sql);
@@ -195,8 +195,11 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
 
         h2 { text-align:center; margin-bottom:20px; color:#333; }
     </style>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
+<body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+
 
 <div class="navbar">
 	<div class="top-right-buttons">
@@ -255,8 +258,7 @@ String searchParam = (searchQuery != null && !searchQuery.trim().isEmpty()) ? "%
             PreparedStatement stmt = null;
             ResultSet rs = null;
             try {
-                Class.forName("oracle.jdbc.driver.OracleDriver");
-                conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "system", "a12345");
+conn = DBConnection.getConnection();
 
                 String sql;
                 if (searchParam != null) {

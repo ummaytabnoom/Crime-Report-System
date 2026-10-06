@@ -1,242 +1,61 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
-<%@ page import="java.sql.*, java.io.*, java.util.Base64" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="utils.DBConnection" %>
 <%
     String currentUser = (String) session.getAttribute("username");
-    byte[] imageBytes = null;
-    try {
-        Class.forName("oracle.jdbc.OracleDriver");
-        Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
-
-        String sql = "SELECT PROFILE_PICTURE FROM REGISTERED_USERS WHERE USER_NAME = ?";
-        PreparedStatement stmt = conn.prepareStatement(sql);
-        stmt.setString(1, currentUser);
-        ResultSet rs = stmt.executeQuery();
-
-        if (rs.next()) {
-            Blob blob = rs.getBlob("PROFILE_PICTURE");
-            if (blob != null) {
-                InputStream is = blob.getBinaryStream();
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-                imageBytes = os.toByteArray();
-                is.close();
+    String role = (String) session.getAttribute("userRole");
+    if (!"admin".equalsIgnoreCase(role)) {
+        String target = "police".equalsIgnoreCase(role) ? "PoliceHome.jsp" : "UserHome.jsp";
+        response.sendRedirect(target);
+        return;
+    }
+    int totalReports=0, pendingReports=0, totalUsers=0, totalPolice=0;
+    try (Connection conn=DBConnection.getConnection()) {
+        String[] sqls = {
+            "SELECT COUNT(*) FROM REPORTED_CRIMES",
+            "SELECT COUNT(*) FROM REPORTED_CRIMES WHERE ACCEPTED_BY IS NULL",
+            "SELECT COUNT(*) FROM REGISTERED_USERS",
+            "SELECT COUNT(*) FROM REGISTERED_USERS WHERE LOWER(ROLE)='police'"
+        };
+        int[] out={0,0,0,0};
+        for(int i=0;i<sqls.length;i++){
+            try(PreparedStatement ps=conn.prepareStatement(sqls[i]); ResultSet rs=ps.executeQuery()){
+                if(rs.next()) out[i]=rs.getInt(1);
             }
         }
-
-        rs.close();
-        stmt.close();
-        conn.close();
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
+        totalReports=out[0]; pendingReports=out[1]; totalUsers=out[2]; totalPolice=out[3];
+    } catch(Exception ignored){}
 %>
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Panel with Hamburger Menu</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-image: url("images/adminHome.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .navbar {
-            background-color: #FF8C00;
-            color: white;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-
-        .navbar-title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            display: block;
-        }
-
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-
-        .show {
-            display: flex;
-        }
-        
-         .top-right-buttons {
-            position: absolute;
-            top: 20px;
-            left: 90%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-
-        .top-right-buttons a {
-            padding: 10px 15px;
-            background-color: #005F5F;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-
-        .content {
-            padding: 40px;
-            text-align: center;
-        }
-        
-         h2 {
-        color: #222;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: black;
-            font-size: 25px;
-        }
-            .action-button {
-        display: inline-block;
-        padding: 30px 70px;
-        background-color: #005F5F;
-        color: white;
-        text-decoration: none;
-        border-radius: 80px;
-        font-weight: bold;
-        text-align: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .action-button:hover {
-        background-color: #008080; /* lighter shade */
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 25px;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Navigation Bar -->
-    <div class="navbar">
-         <div class="user-info">
-        <% if (imageBytes != null) { %>
-            <img class="user-pic" src="data:image/jpeg;base64,<%= Base64.getEncoder().encodeToString(imageBytes) %>" alt="Profile Picture" />
-        <% } else { %>
-            <img class="user-pic" src="images/default.png" alt="Default Profile Picture" />
-        <% } %>
-        <span class="user-name"><%= currentUser %></span>
-    </div>
-        <div class="menu-icon" onclick="toggleMenu()">☰</div>
-
-        <!-- Dropdown menu -->
-        <div id="dropdownMenu" class="dropdown">
-            <a href="Settings.jsp">Settings</a>
-            <a href="Logout.jsp">Logout</a>
-        </div>
-    </div>
-    
-    <div class="top-right-buttons">
-        <a href="UserHome.jsp">User Dashboard</a>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content">
-        <h2>Welcome <span class="user-name" style="color: black;"><%= currentUser %></span> !</h2>
-
-       
-    </div>
-    
-    
-    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-    <a href="UserManage.jsp" class="action-button">Manage Users</a>
-    <a href="ReportMan.jsp" class="action-button">Manage Reports</a>
-    
-    <a href="AdminInfo.jsp" class="action-button">All Admin Information</a>
-    <a href="PoliceInfo.jsp" class="action-button">All Police Information</a>
-</div>
-    
-    
-    <!-- JavaScript -->
-    <script>
-        function toggleMenu() {
-            document.getElementById("dropdownMenu").classList.toggle("show");
-        }
-
-        // Close the dropdown when clicking outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.menu-icon')) {
-                var dropdown = document.getElementById("dropdownMenu");
-                if (dropdown && dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        };
-    </script>
-
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Crime Report System</title>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %></head>
+<body class="crs-modern">
+<%@ include file="/WEB-INF/jspf/navbar.jspf" %>
+<main class="crs-page">
+<section class="crs-content crs-container" style="padding-top:34px">
+  <div class="crs-page-title">
+    <div><h1>Admin dashboard</h1><p>Keep reports, users, and operational information organized.</p></div>
+    <span class="crs-badge crs-badge-info">Administrator • <%= currentUser %></span>
+  </div>
+  <div class="crs-stat-grid">
+    <article class="crs-card crs-stat"><div class="crs-stat-label">Total reports</div><div class="crs-stat-value"><%= totalReports %></div><span style="color:var(--text-muted);font-size:12px;">All submitted incidents</span></article>
+    <article class="crs-card crs-stat"><div class="crs-stat-label">Awaiting review</div><div class="crs-stat-value"><%= pendingReports %></div><span style="color:var(--text-muted);font-size:12px;">Reports without approval</span></article>
+    <article class="crs-card crs-stat"><div class="crs-stat-label">Registered users</div><div class="crs-stat-value"><%= totalUsers %></div><span style="color:var(--text-muted);font-size:12px;">All system accounts</span></article>
+    <article class="crs-card crs-stat"><div class="crs-stat-label">Police accounts</div><div class="crs-stat-value"><%= totalPolice %></div><span style="color:var(--text-muted);font-size:12px;">Verified police users</span></article>
+  </div>
+  <div class="crs-grid-3" style="margin-top:18px;">
+    <article class="crs-card crs-feature-card"><div class="crs-feature-icon">▤</div><h3>Report management</h3><p>Review, approve, reject, and manage submitted crime reports.</p><a class="crs-btn crs-btn-primary" style="margin-top:18px;" href="ReportMan.jsp">Manage reports</a></article>
+    <article class="crs-card crs-feature-card"><div class="crs-feature-icon">♙</div><h3>User management</h3><p>Search registered accounts and maintain user access information.</p><a class="crs-btn crs-btn-outline" style="margin-top:18px;" href="UserManage.jsp">Manage users</a></article>
+    <article class="crs-card crs-feature-card"><div class="crs-feature-icon">♧</div><h3>Directories</h3><p>Access official police and administrator information from one place.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;"><a class="crs-btn crs-btn-outline" href="PoliceInfo.jsp">Police</a><a class="crs-btn crs-btn-outline" href="AdminInfo.jsp">Admins</a></div></article>
+  </div>
+  <section class="crs-card" style="padding:24px;margin-top:18px;">
+    <h2 style="margin:0;font-size:19px;">Welcome back</h2>
+    <p style="margin:8px 0 0;color:var(--text-muted);line-height:1.65;">Use the navigation above to manage the reporting workflow. Your administrative actions should be limited to information you are authorized to review.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;"><a class="crs-btn crs-btn-primary" href="ReportMan.jsp">Review reports</a><a class="crs-btn crs-btn-outline" href="UserManage.jsp">Manage accounts</a><a class="crs-btn crs-btn-ghost" href="Settings.jsp">Settings</a></div>
+  </section>
+</section>
+</main>
 </body>
 </html>

@@ -1,5 +1,6 @@
 <%@ page import="org.apache.commons.fileupload.*, org.apache.commons.fileupload.disk.*, org.apache.commons.fileupload.servlet.*, java.util.*" %>
 <%@ page import="java.sql.*" %>
+<%@ page import="utils.DBConnection" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html>
@@ -97,8 +98,9 @@
             color: red;
         }
     </style>
+<%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body>
+<body class="crs-modern">
 
 <nav>
     <div class="nav-left">
@@ -155,8 +157,7 @@
                 ResultSet rs = null;
 
                 try {
-                    Class.forName("oracle.jdbc.driver.OracleDriver");
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+conn = DBConnection.getConnection();
 
                     String sql = "SELECT * FROM REGISTERED_USERS " +
                                  "WHERE FULL_NAME=? AND USER_NAME=? AND EMAIL=? " +
@@ -211,8 +212,7 @@
                     Connection conn = null;
                     PreparedStatement pstmt = null;
                     try {
-                        Class.forName("oracle.jdbc.driver.OracleDriver");
-                        conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE", "system", "a12345");
+conn = DBConnection.getConnection();
 
                         String updateSql = "UPDATE REGISTERED_USERS SET PASSWORD=? WHERE USER_NAME=?";
                         pstmt = conn.prepareStatement(updateSql);

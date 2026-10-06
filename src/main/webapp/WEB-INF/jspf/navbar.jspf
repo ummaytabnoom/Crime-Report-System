@@ -1,0 +1,65 @@
+<%@ page import="java.util.Locale" %>
+<%
+    String navUser = (String) session.getAttribute("username");
+    String navRole = (String) session.getAttribute("userRole");
+    if (navRole == null) navRole = "public";
+    navRole = navRole.toLowerCase(Locale.ROOT);
+    String navHome = "public".equals(navRole) ? "UserHome.jsp" : ("police".equals(navRole) ? "PoliceHome.jsp" : "AdminsHome.jsp");
+%>
+<header class="crs-appbar">
+    <div class="crs-appbar-inner">
+        <a class="crs-brand" href="<%= navHome %>" aria-label="Crime Report System home">
+            <span class="crs-brand-mark">◈</span>
+            <span>Crime Report</span>
+        </a>
+        <nav class="crs-appbar-links" aria-label="Primary navigation">
+            <a href="<%= navHome %>">Dashboard</a>
+            <% if ("public".equals(navRole)) { %>
+                <a href="ReportSub.jsp">Submit report</a>
+                <a href="MyReports.jsp">My reports</a>
+            <% } else if ("police".equals(navRole)) { %>
+                <a href="UpdateCrime.jsp">Crime reports</a>
+                <a href="StateUpgrade.jsp">Status updates</a>
+                <a href="PoliceInfo.jsp">Police directory</a>
+            <% } else if ("admin".equals(navRole)) { %>
+                <a href="ReportMan.jsp">Reports</a>
+                <a href="UserManage.jsp">Users</a>
+                <a href="PoliceInfo.jsp">Police</a>
+                <a href="AdminInfo.jsp">Admins</a>
+            <% } %>
+        </nav>
+        <div class="crs-appbar-actions">
+            <button class="crs-btn crs-theme-toggle" type="button" onclick="CRSTheme.toggle()" aria-label="Toggle theme">
+                <span data-theme-icon>☾</span>
+            </button>
+            <div class="crs-account">
+                <button class="crs-account-trigger" type="button" aria-expanded="false" aria-controls="crsAccountMenu">
+                    <span class="crs-avatar"><%= navUser == null || navUser.isBlank() ? "?" : navUser.substring(0,1).toUpperCase() %></span>
+                    <span class="crs-account-name"><%= navUser == null ? "Guest" : navUser %></span>
+                    <span class="crs-account-chevron">⌄</span>
+                </button>
+                <div class="crs-account-menu" id="crsAccountMenu">
+                    <% if (navUser != null) { %>
+                        <a href="Settings.jsp">Settings</a>
+                        <a href="Notification.jsp">Notifications</a>
+                        <a href="Logout.jsp">Sign out</a>
+                    <% } else { %>
+                        <a href="Login.jsp">Sign in</a>
+                        <a href="Registration.jsp">Create account</a>
+                    <% } %>
+                </div>
+            </div>
+            <button class="crs-mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+        </div>
+    </div>
+    <div class="crs-mobile-nav" id="crsMobileNav">
+        <a href="<%= navHome %>">Dashboard</a>
+        <% if ("public".equals(navRole)) { %>
+            <a href="ReportSub.jsp">Submit report</a><a href="MyReports.jsp">My reports</a>
+        <% } else if ("police".equals(navRole)) { %>
+            <a href="UpdateCrime.jsp">Crime reports</a><a href="StateUpgrade.jsp">Status updates</a><a href="PoliceInfo.jsp">Police directory</a>
+        <% } else if ("admin".equals(navRole)) { %>
+            <a href="ReportMan.jsp">Reports</a><a href="UserManage.jsp">Users</a><a href="PoliceInfo.jsp">Police</a><a href="AdminInfo.jsp">Admins</a>
+        <% } %>
+    </div>
+</header>
