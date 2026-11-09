@@ -67,6 +67,7 @@ try (Connection conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8" />
     <link
       rel="stylesheet"
@@ -74,175 +75,10 @@ try (Connection conn = DBConnection.getConnection();
     />
 
     <title>Change Password</title>
-    <style>
-        /* --- CSS STYLES --- */
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            background: url("images/settingsBackground.jpg") no-repeat center center fixed;
-            background-size: cover;
-            /* Added for container centering and vertical layout */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
-        }
-        .navbar {
-            /* Full width added for consistency */
-            width: 100%; 
-            background-color: #FF8C00;
-            /* Padding for gap between page edge and user pic/menu icon */
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-            position: relative;
-            top: 10px;
-        }
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            color: black;
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-        }
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-        .show {
-            display: flex;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 25px;
-        }
-        .container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            width: 400px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            /* Updated margin-top for gap below navbar (60px = desired vertical gap) */
-            margin-top: 60px; 
-            margin-bottom: 45px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            margin-top: 20px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-            color: #333; 
-        }
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        input[type="password"], input[type="text"] {
-            width: 100%;
-            padding: 10px 40px 10px 10px; 
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        .toggle-icon {
-            position: absolute;
-            right: 12px;
-            /* Set to 50% to align vertically with the input box */
-            top: 50%; 
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 20px;
-            color: #555;
-            user-select: none;
-            transition: color 0.3s ease;
-        }
-        .toggle-icon:hover {
-            color: #FF8C00;
-        }
-
-.preview-img {
-    display: block;
-    margin: 15px auto;
-    width: 25%;           /* responsive size */
-    max-width: 100px;     /* never too big */
-    aspect-ratio: 1/1;    /* keeps it square */
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #FF8C00;
-}
-        input[type="submit"] {
-            width: 100%;
-            padding: 12px;
-            background-color: #FF8C00;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #e67e00;
-        }
-        .message {
-            text-align: center;
-            font-weight: bold;
-            color: <%= message.contains("successfully") ? "green" : "red" %>;
-            margin-bottom: 15px;
-        }
-        .back-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .back-link a {
-            text-decoration: none;
-            padding: 10px 20px;
-            background-color: #005F5F;
-            color: white;
-            border-radius: 5px;
-        }
-        .back-link a:hover {
-            background-color: #004040;
-        }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-changeprofilepic">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -261,7 +97,7 @@ try (Connection conn = DBConnection.getConnection();
     </div>
 </div>
 
-<div class="container">
+<div class="form-panel">
     <% if (!message.isEmpty()) { %>
         <div class="message"><%= message %></div>
     <% } %>

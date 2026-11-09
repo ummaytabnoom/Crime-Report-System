@@ -6,13 +6,13 @@
     navRole = navRole.toLowerCase(Locale.ROOT);
     String navHome = "public".equals(navRole) ? "UserHome.jsp" : ("police".equals(navRole) ? "PoliceHome.jsp" : "AdminsHome.jsp");
 %>
-<header class="crs-appbar">
-    <div class="crs-appbar-inner">
-        <a class="crs-brand" href="<%= navHome %>" aria-label="Crime Report System home">
-            <span class="crs-brand-mark">◈</span>
+<header class="appbar">
+    <div class="appbar-inner">
+        <a class="brand" href="<%= navHome %>" aria-label="Crime Report System home">
+            <img class="brand-mark" src="images/crslogo.png" alt="">
             <span>Crime Report</span>
         </a>
-        <nav class="crs-appbar-links" aria-label="Primary navigation">
+        <nav class="appbar-links" aria-label="Primary navigation">
             <a href="<%= navHome %>">Dashboard</a>
             <% if ("public".equals(navRole)) { %>
                 <a href="ReportSub.jsp">Submit report</a>
@@ -28,17 +28,15 @@
                 <a href="AdminInfo.jsp">Admins</a>
             <% } %>
         </nav>
-        <div class="crs-appbar-actions">
-            <button class="crs-btn crs-theme-toggle" type="button" onclick="CRSTheme.toggle()" aria-label="Toggle theme">
-                <span data-theme-icon>☾</span>
-            </button>
-            <div class="crs-account">
-                <button class="crs-account-trigger" type="button" aria-expanded="false" aria-controls="crsAccountMenu">
-                    <span class="crs-avatar"><%= navUser == null || navUser.isBlank() ? "?" : navUser.substring(0,1).toUpperCase() %></span>
-                    <span class="crs-account-name"><%= navUser == null ? "Guest" : navUser %></span>
-                    <span class="crs-account-chevron">⌄</span>
+        <div class="appbar-actions">
+            
+            <div class="account">
+                <button class="account-trigger" type="button" aria-expanded="false" aria-controls="crsAccountMenu">
+                    <img class="account-photo" src="<%= request.getContextPath() %>/ProfileImage.jsp" alt="Your profile">
+                    <span class="account-name"><%= navUser == null ? "Guest" : navUser %></span>
+                    <span class="account-chevron" aria-hidden="true"></span>
                 </button>
-                <div class="crs-account-menu" id="crsAccountMenu">
+                <div class="account-menu" id="crsAccountMenu">
                     <% if (navUser != null) { %>
                         <a href="Settings.jsp">Settings</a>
                         <a href="Notification.jsp">Notifications</a>
@@ -49,10 +47,10 @@
                     <% } %>
                 </div>
             </div>
-            <button class="crs-mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+            <button class="mobile-menu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
         </div>
     </div>
-    <div class="crs-mobile-nav" id="crsMobileNav">
+    <div class="mobile-nav" id="crsMobileNav">
         <a href="<%= navHome %>">Dashboard</a>
         <% if ("public".equals(navRole)) { %>
             <a href="ReportSub.jsp">Submit report</a><a href="MyReports.jsp">My reports</a>

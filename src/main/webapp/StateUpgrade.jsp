@@ -211,11 +211,12 @@ conn = DBConnection.getConnection();
             crime.put("mobileNo", mobileNo);
             crime.put("realFullName", fullNameReal);
             crime.put("realUsername", userNameReal);
+            crime.put("hideIdentity", hideIdentity);
 
             if ("YES".equalsIgnoreCase(hideIdentity)) {
                 crime.put("displayName", "Anonymous (Identity Hidden from Public)");
             } else {
-                crime.put("displayName", fullNameReal + " (Username: " + userNameReal + ")");
+                crime.put("displayName", fullNameReal);
             }
 
             crimeList.add(crime);
@@ -235,156 +236,13 @@ conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Police - Report Status Manager</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: url("images/adminHome.jpg") no-repeat center center fixed;
-            background-size: cover;
-            font-family: Arial, sans-serif;
-        }
-        .navbar {
-            background-color: #FF8C00;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-            color: white;
-        }
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            display: block;
-        }
-        .dropdown a:hover { background-color: #f2f2f2; }
-        .show { display: flex; }
-        .top-right-buttons {
-            position: absolute;
-            top: 30px;
-            left: 80%;
-            transform: translateX(0%);
-        }
-        .top-right-buttons a {
-            padding: 10px 15px;
-            background-color: #005F5F;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 22px;
-        }
-        .content-box {
-            background-color: rgba(255, 255, 255, 0.96);
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 1000px;
-            margin: 40px auto;
-            color: black;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        h2 { text-align: center; color: #222; }
-        
-        .crime-container {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 20px auto;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .profile-image {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 50%;
-            float: left;
-            margin-right: 15px;
-            border: 2px solid #007BFF;
-        }
-        .crime-image {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            display: block;
-            margin: 15px 0;
-            border-radius: 6px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            color: white;
-        }
-        .badge-pending { background-color: orange; }
-        .badge-ongoing { background-color: #007BFF; }
-        .badge-resolved { background-color: green; }
-
-        .btn-group {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-        .status-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .status-btn:hover { opacity: 0.9; }
-        .p-btn { background-color: orange; }
-        .o-btn { background-color: #007BFF; }
-        .r-btn { background-color: green; }
-        
-        .meta-info {
-            background: #eef2f3;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 13px;
-            margin-top: 10px;
-        }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-stateupgrade">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -412,7 +270,7 @@ conn = DBConnection.getConnection();
         <h2>Investigative Case Status Management</h2>
         
         <% if(!feedbackMessage.isEmpty()){ %>
-            <p style="color: blue; font-weight: bold; text-align: center; background: #e2e3e5; padding: 10px; border-radius: 5px;"><%= feedbackMessage %></p>
+            <p class="message-note"><%= feedbackMessage %></p>
         <% } %>
 
         <%
@@ -442,8 +300,7 @@ conn = DBConnection.getConnection();
                 <img src="images/default.png" class="profile-image">
             <% } %>
 
-            <h3><%= crime.get("displayName") %></h3>
-            <p><strong>Reporter Contact Mobile:</strong> <%= crime.get("mobileNo") %></p>
+            <h3><%= crime.get("displayName") %><small class="report-username"><%= "YES".equalsIgnoreCase((String) crime.get("hideIdentity")) ? "" : "@" + crime.get("realUsername") %></small></h3>
             <p><strong>Category:</strong> <%= crime.get("category") %></p>
             <p><strong>Incident Location:</strong> <%= crime.get("fullLocation") %></p>
             <p><strong>Incident Date:</strong> <%= crime.get("date") %></p>
@@ -454,7 +311,7 @@ conn = DBConnection.getConnection();
             </p>
 
             <div class="meta-info">
-                <strong>Vetted By Admin:</strong> <%= crime.get("acceptedBy") %> | 
+                <strong>Vetted By Admin:</strong> <%= crime.get("acceptedBy") == null || String.valueOf(crime.get("acceptedBy")).trim().isEmpty() ? "Not reviewed" : "@" + crime.get("acceptedBy") %> | 
                 <strong>Upgraded By:</strong> <%= (upgradedByStr != null && !upgradedByStr.isEmpty()) ? upgradedByStr : "No Officer Assigned Yet" %>
             </div>
 
@@ -498,19 +355,19 @@ if (mediaData != null && !mediaData.isEmpty()) {
 %>
 
             <div class="btn-group">
-                <form method="post" style="margin:0;">
+                <form method="post" class="no-margin">
                     <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
                     <input type="hidden" name="newStatus" value="Pending">
                     <button type="submit" class="status-btn p-btn">Set Pending</button>
                 </form>
                 
-                <form method="post" style="margin:0;">
+                <form method="post" class="no-margin">
                     <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
                     <input type="hidden" name="newStatus" value="Under Investigation">
                     <button type="submit" class="status-btn o-btn">Set Under Investigation</button>
                 </form>
                 
-                <form method="post" style="margin:0;">
+                <form method="post" class="no-margin">
                     <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
                     <input type="hidden" name="newStatus" value="Resolved">
                     <button type="submit" class="status-btn r-btn">Set Resolved</button>
@@ -522,7 +379,7 @@ if (mediaData != null && !mediaData.isEmpty()) {
             }
         } else {
         %>
-            <p style="text-align:center; color:#666; font-size:16px;">No approved case records are available for your regional posting.</p>
+            <p class="centered-note">No approved case records are available for your regional posting.</p>
         <%
         }
         %>

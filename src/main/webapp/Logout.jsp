@@ -9,69 +9,13 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Logout</title>
-    <style>
-       
-        
-       body {
-    font-family: Arial, sans-serif;
-    background-image: url("images/logoutBackground.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-        .logout-container {
-            background-color: #E5CFFB;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 500px;
-            margin: auto;
-            text-align: center;
-        }
-
-        .logout-container h2 {
-            color: #333;
-        }
-
-        .logout-message {
-            margin-bottom: 20px;
-            color: green;
-            font-weight: bold;
-        }
-
-        .mainHome-button {
-            width: 100%;
-            padding: 10px;
-            background-color: #FF8C00;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-        .login-wrapper {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 20px;
-        }
-        .mainHome-button:hover {
-            background-color: #e67300;
-        }
     
-    </style>
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-logout">
 <div class="login-wrapper">
 	<div class="logout-container">
    	 <h2>Thank you for your contribution.</h2>

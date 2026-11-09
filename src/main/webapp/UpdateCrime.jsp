@@ -49,7 +49,7 @@ conn = DBConnection.getConnection();
 
         // Get all reported crimes from the PERMANENT_REPORTS table
         PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM PERMANENT_REPORTS ORDER BY CRIME_ID DESC");
+                "SELECT * FROM REPORTED_CRIMES ORDER BY CRIME_ID DESC");
         ResultSet crimesRs = ps.executeQuery();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -102,7 +102,7 @@ conn = DBConnection.getConnection();
                 crime.put("profileImg", "");
             } else {
                 crime.put("displayName", fullNameReal);
-                crime.put("displayUsername", " (" + userNameReal + ")");
+                crime.put("displayUsername", "@" + userNameReal);
                 crime.put("profileImg", profileImg);
             }
 
@@ -112,7 +112,7 @@ conn = DBConnection.getConnection();
         ps.close();
         
     } catch (Exception e) {
-        out.println("<p style='color:red;'>Database Error: " + e.getMessage() + "</p>");
+        out.println("<p class='message error'>Database Error: " + e.getMessage() + "</p>");
     } finally {
         try { if (conn != null) conn.close(); } catch (SQLException e) { /* ignore */ }
     }
@@ -122,145 +122,13 @@ conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>User Home</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            background: url("images/adminMan.png") no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-        .navbar {
-            background-color: #FF8C00;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-            position: relative;
-            top: 10px;
-        }
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            color: black;
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-        }
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-        .show {
-            display: flex;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 25px;
-        }
-        .crime-container {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin: 25px auto;
-            border-radius: 10px;
-            background-color: #f2f2f2;
-            color: black;
-            width: 80%;
-            max-width: 800px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .profile-image {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 50%;
-            float: left;
-            margin-right: 15px;
-            border: 2px solid #007BFF;
-        }
-        .crime-image {
-            max-width: 400px;
-            max-height: 300px;
-            display: block;
-            margin-top: 15px;
-            border-radius: 8px;
-        }
-        .top-right-buttons {
-            position: absolute;
-            top: 30px;
-            left: 75%;
-            transform: translateX(0%);
-        }
-        .top-right-buttons a {
-            background-color: #005F5F;
-            color: white;
-            padding: 8px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-        }
-        .top-right-buttons a:hover {
-            background-color: #008C8C;
-            color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .search-bar {
-            width: 60%;
-            max-width: 500px;
-            margin: 0 auto 20px auto;
-            display: block;
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-        .content-box {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 1200px;
-            margin: 40px auto;
-            color: black;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: black;
-        }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-updatecrime">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 <div class="navbar">
@@ -301,9 +169,9 @@ conn = DBConnection.getConnection();
         <img src="images/default.png" class="profile-image" alt="Default"/>
     <% } %>
 
-    <h3><%= displayName %><%= crime.get("displayUsername") %></h3>
+    <h3><%= displayName %><small class="report-username"><%= crime.get("displayUsername") %></small></h3>
     <% if(!displayName.equals("Anonymous")) { %>
-        <span style="color: gray; font-size: 14px;"></span>
+        <span class="body-small"></span>
     <% } %>
 
     <p><strong>Category:</strong> <%= crime.get("category") %></p>
@@ -320,7 +188,7 @@ conn = DBConnection.getConnection();
     <% } %>
 </div>
 <% } } else { %>
-    <p style="text-align:center; color:black;">No reported crimes found.</p>
+    <p class="text-center">No reported crimes found.</p>
 <% } %>
 </div>
 

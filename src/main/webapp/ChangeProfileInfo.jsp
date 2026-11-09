@@ -112,159 +112,13 @@ if ("POST".equalsIgnoreCase(request.getMethod())) {
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
     <title>Update Profile</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            background: url("images/settingsBackground.jpg") no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-            /* Added for container centering below navbar */
-            display: flex; 
-            flex-direction: column;
-            align-items: center;
-        }
-        .navbar {
-            width: 100%; /* Ensure navbar spans full width */
-            background-color: #FF8C00;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-            position: relative;
-            top: 10px;
-        }
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            color: black;
-            border-radius: 6px;
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-        }
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-        .show {
-            display: flex;
-        }
-        .user-info {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .user-name {
-            font-weight: bold;
-            color: white;
-            font-size: 25px;
-        }
-        
-        .container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            width: 400px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            /* Matching the margin from your last provided CSS */
-            margin-top: 45px; 
-            margin-bottom: 45px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            /* Added bottom border for visual separation, typical for update forms */
-            border-bottom: 2px solid #FFA500; 
-            padding-bottom: 10px;
-        }
-        form {
-            margin-top: 20px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-            color: #333; /* Ensure label text is visible */
-        }
-        /* Style for all text/email/number inputs in the form */
-        input[type="text"],
-        input[type="email"],
-        input[type="date"],
-        select {
-            width: 100%;
-            padding: 10px;
-            margin: 6px 0 15px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box; /* Crucial for 100% width compatibility */
-            font-size: 16px;
-        }
-        input[type="submit"] {
-            width: 100%;
-            padding: 12px;
-            background-color: #FF8C00;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #e67e00;
-        }
-        .message {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: <%= message.contains("successfully") ? "green" : "red" %>;
-        }
-        .error {
-            color: red;
-        }
-        .success {
-            color: green;
-        }
-        .back-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .back-link a {
-            text-decoration: none;
-            padding: 10px 20px;
-            background-color: #005F5F;
-            color: white;
-            border-radius: 5px;
-        }
-        .back-link a:hover {
-            background-color: #004040;
-        }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-changeprofileinfo">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 <div class="navbar">
@@ -282,7 +136,7 @@ if ("POST".equalsIgnoreCase(request.getMethod())) {
         <a href="Logout.jsp">Logout</a>
     </div>
 </div>
-<div class="container">
+<div class="form-panel">
     <h2>Update Your Profile</h2>
 
     <% if (!message.isEmpty()) { %>

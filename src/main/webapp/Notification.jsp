@@ -12,15 +12,15 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Notifications - Crime Report System</title>
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %></head>
-<body class="crs-modern">
+<body class="modern page-notification">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
-<main class="crs-page">
-<section class="crs-content crs-container" style="padding-top:34px">
-  <div class="crs-page-title">
+<main class="page">
+<section class="content page-shell content-start">
+  <div class="page-title">
     <div><h1>Notifications</h1><p>Recent activity from the reporting system.</p></div>
-    <a class="crs-btn crs-btn-outline" href="<%= home %>">Back to dashboard</a>
+    <a class="btn btn-outline" href="<%= home %>">Back to dashboard</a>
   </div>
-  <section class="crs-card" style="padding:8px 22px;">
+  <section class="card wide-button">
   <%
     boolean found=false;
     String sql = "SELECT CRIME_ID, CATEGORY, STATUS, DATE_OF_INCIDENT FROM REPORTED_CRIMES WHERE USER_NAME=? ORDER BY CRIME_ID DESC";
@@ -35,25 +35,25 @@
           Timestamp date=rs.getTimestamp("DATE_OF_INCIDENT");
           String badge = status==null ? "Pending" : status;
   %>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 0;border-bottom:1px solid var(--border);">
-      <div><div style="font-weight:750;">Report #<%= rs.getInt("CRIME_ID") %> · <%= category == null ? "Crime report" : category %></div>
-      <div style="margin-top:4px;color:var(--text-muted);font-size:13px;">Your report has status <strong><%= badge %></strong><% if(date!=null){ %> · <%= date %><% } %></div></div>
-      <span class="crs-badge crs-badge-info"><%= badge %></span>
+    <div class="notification-row">
+      <div><div class="text-semibold">Report #<%= rs.getInt("CRIME_ID") %> · <%= category == null ? "Crime report" : category %></div>
+      <div class="notification-date">Your report has status <strong><%= badge %></strong><% if(date!=null){ %> · <%= date %><% } %></div></div>
+      
     </div>
   <%
         }
       }
     } catch(Exception e) {
   %>
-    <div class="crs-message error" style="margin:14px 0;">Notifications could not be loaded right now. Please try again later.</div>
+    <div class="message error notification-message">Notifications could not be loaded right now. Please try again later.</div>
   <%
     }
     if(!found){
   %>
-    <div style="padding:48px 10px;text-align:center;">
-      <div class="crs-feature-icon" style="margin:0 auto 14px;">✓</div>
-      <h2 style="margin:0;font-size:18px;">You're all caught up</h2>
-      <p style="margin:8px 0;color:var(--text-muted);">There are no recent report updates to show.</p>
+    <div class="empty-state">
+      <div class="feature-icon centered-icon">✓</div>
+      <h2 class="empty-title">You're all caught up</h2>
+      <p class="empty-copy">There are no recent report updates to show.</p>
     </div>
   <% } %>
   </section>

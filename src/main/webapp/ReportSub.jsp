@@ -184,87 +184,13 @@ Connection conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Report a Crime</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-image: url("images/reportBackground.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-  .navbar {
-            background-color: #FF8C00;
-            color: white;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-/* TOGGLE MENU ICON */
-.menu-icon{
-    font-size: 30px;
-    cursor: pointer;
-    color: white;
-
-    position: absolute;
-    top: 18px;
-    right: 20px;
-
-    z-index: 1000;
-}
-
-/* DROPDOWN MENU */
-.dropdown{
-    position: absolute;
-    top: 60px;
-    right: 10px;
-
-    background-color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    border-radius: 6px;
-
-    display: none;
-    flex-direction: column;
-
-    min-width: 180px;
-    z-index: 999;
-}
- .dropdown a { padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; display: block; }
-        .dropdown a:hover { background-color: #f2f2f2; }
-        .show { display: flex; }
-        .top-right-buttons { position: absolute; top: 20px; left:80%; transform: translateX(-50%); display: flex; gap: 20px; }
-        .top-right-buttons a { padding: 10px 15px; background-color: #005F5F; color: white; text-decoration: none; border-radius: 5px; transition: all 0.3s ease; }
-        .top-right-buttons a:hover { background-color: #008C8C; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .container { max-width: 750px; margin: 20px auto 10px; background-color: rgba(255,255,255,0.9); padding: 20px 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        h2 { text-align: center; color: #005F5F; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        td { padding: 6px 8px; vertical-align: top; }
-        td:first-child { width: 20%; font-weight: bold; color: #333; }
-        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-        input[type="file"] { padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; background-color: white; cursor: pointer; }
-        textarea { resize: vertical; }
-        input[type="submit"] { display: block; margin: 25px auto 0; padding: 12px 25px; background-color: #FF8C00; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        input[type="submit"]:hover { background-color: #e67300; }
-        .message { text-align: center; margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 5px; }
-        .message.success { color: green; background-color: #d4edda; border: 1px solid #c3e6cb; }
-        .message.error { color: red; background-color: #f8d7da; border: 1px solid #f5c6cb; }
-        .user-info { display: inline-flex; align-items: center; gap: 10px; margin-left: 5px; vertical-align: middle; }
-        .user-pic { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
-        .user-name { font-weight: bold; color: white; font-size: 25px; }
-        .error-message { color: #d9534f; font-size: 0.9em; margin-top: 10px; margin-bottom: 10px; display: none; }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-reportsub">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
     <div class="navbar">
@@ -298,7 +224,7 @@ Connection conn = DBConnection.getConnection();
         <a href="MyReports.jsp">My Reports</a>
     </div>
 
-    <div class="container">
+    <div class="form-panel">
         <h2>Crime Reporting Form</h2>
         <%= message %>
         <form action="ReportSub.jsp" method="post" enctype="multipart/form-data">
@@ -352,7 +278,7 @@ Connection conn = DBConnection.getConnection();
     <tr>
         <td>Road Name:</td>
         <td>
-            <input type="text" name="roadName" required style="width: 100%;">
+            <input type="text" name="roadName" required class="full-width">
         </td>
     </tr>
 
@@ -360,7 +286,7 @@ Connection conn = DBConnection.getConnection();
     <tr>
         <td>Road No:</td>
         <td>
-            <input type="text" name="roadNo" required style="width: 100%;">
+            <input type="text" name="roadNo" required class="full-width">
         </td>
     </tr>
 
@@ -369,7 +295,7 @@ Connection conn = DBConnection.getConnection();
         <td>Date of Incident:</td>
         <td>
             <input type="date" name="date" id="incidentDate"
-                   required onchange="validateIncidentDate()" style="width: 100%;">
+                   required onchange="validateIncidentDate()" class="full-width">
             <br>
             <span id="incident-date-error" class="error-message"></span>
         </td>
@@ -379,7 +305,7 @@ Connection conn = DBConnection.getConnection();
     <tr>
         <td>Crime Category:</td>
         <td>
-            <select name="category" required style="width: 100%;">
+            <select name="category" required class="full-width">
                 <option value="">Select a category</option>
                 <option value="Theft">Theft</option>
                 <option value="Robbery">Robbery</option>
@@ -394,7 +320,7 @@ Connection conn = DBConnection.getConnection();
     <tr>
         <td>Description:</td>
         <td>
-            <textarea name="description" rows="4" required style="width: 100%;"></textarea>
+            <textarea name="description" rows="4" required class="full-width"></textarea>
         </td>
     </tr>
 
@@ -412,7 +338,7 @@ Connection conn = DBConnection.getConnection();
     <tr>
         <td>Hide Identity:</td>
         <td>
-            <select name="hideIdentity" required style="width: 100%;">
+            <select name="hideIdentity" required class="full-width">
                 <option value="NO" selected>No</option>
                 <option value="YES">Yes</option>
             </select>
@@ -421,7 +347,7 @@ Connection conn = DBConnection.getConnection();
 
     <!-- SUBMIT -->
     <tr>
-        <td colspan="2" style="text-align:center; padding-top:15px;">
+        <td colspan="2" class="submit-row">
             <input type="submit" value="Submit Report">
         </td>
     </tr>

@@ -36,39 +36,33 @@ REPORTED_CRIMES
 
 ## Table: `POLICE_INFO`
 
-| Column Name | Data Type | Constraints |
-|--------------|-----------|-------------|
-| POLICE_ID | VARCHAR2(20) | PRIMARY KEY |
-| NAME | VARCHAR2(100) | |
-| FATHERS_NAME | VARCHAR2(100) | |
-| MOTHERS_NAME | VARCHAR2(100) | |
-| PERMANENT_ADDRESS | VARCHAR2(300) | |
-| SELECTION_YEAR | NUMBER(4) | |
-| POSTING_AREA | VARCHAR2(150) | |
-| POSTING_YEAR | NUMBER(4) | |
-| PICTURE_FRONT | BLOB | |
-| MERITAL_STATUS | VARCHAR2(50) | |
-| INJURIES | VARCHAR2(500) | |
-| POST_NAME | VARCHAR2(50) | |
-| POSTING_CITY | VARCHAR2(100) | |
-| POLICE_STATION | VARCHAR2(100) | |
+| Column Name    | Data Type     | Constraints |
+| -------------- | ------------- | ----------- |
+| POLICE_ID      | VARCHAR2(20)  | PRIMARY KEY |
+| NAME           | VARCHAR2(100) |             |
+| SELECTION_YEAR | NUMBER(4)     |             |
+| POSTING_AREA   | VARCHAR2(150) |             |
+| POSTING_YEAR   | NUMBER(4)     |             |
+| POST_NAME      | VARCHAR2(50)  |             |
+| POSTING_CITY   | VARCHAR2(100) |             |
+| POLICE_STATION | VARCHAR2(100) |             |
 
 ---
 
 ## Table: `REGISTERED_USERS`
 
-| Column Name | Data Type | Constraints |
-|--------------|-----------|-------------|
-| ID | NUMBER | PRIMARY KEY, IDENTITY |
-| FULL_NAME | VARCHAR2(100) | NOT NULL |
-| USER_NAME | VARCHAR2(100) | NOT NULL |
-| EMAIL | VARCHAR2(150) | NOT NULL |
-| DOB | DATE | |
-| MOBILE | VARCHAR2(20) | |
-| ROLE | VARCHAR2(20) | |
-| POLICE_ID | VARCHAR2(20) | FOREIGN KEY |
-| PASSWORD | VARCHAR2(300) | NOT NULL |
-| PROFILE_PICTURE | BLOB | |
+| Column Name     | Data Type     | Constraints           |
+| --------------- | ------------- | --------------------- |
+| ID              | NUMBER        | PRIMARY KEY, IDENTITY |
+| FULL_NAME       | VARCHAR2(100) | NOT NULL              |
+| USER_NAME       | VARCHAR2(100) | NOT NULL              |
+| EMAIL           | VARCHAR2(150) | NOT NULL              |
+| DOB             | DATE          |                       |
+| MOBILE          | VARCHAR2(20)  |                       |
+| ROLE            | VARCHAR2(20)  |                       |
+| POLICE_ID       | VARCHAR2(20)  | FOREIGN KEY           |
+| PASSWORD        | VARCHAR2(300) | NOT NULL              |
+| PROFILE_PICTURE | BLOB          |                       |
 
 ### Foreign Key
 
@@ -80,29 +74,29 @@ POLICE_ID → POLICE_INFO(POLICE_ID)
 
 ## Table: `REPORTED_CRIMES`
 
-| Column Name | Data Type | Constraints |
-|--------------|-----------|-------------|
-| CRIME_ID | NUMBER | PRIMARY KEY, IDENTITY |
-| ID | NUMBER(5) | FOREIGN KEY |
-| USER_NAME | VARCHAR2(100) | NOT NULL |
-| FULL_NAME | VARCHAR2(100) | NOT NULL |
-| ZILLA | VARCHAR2(100) | NOT NULL |
-| UPAZILLA | VARCHAR2(100) | NOT NULL |
-| POLICE_STATION | VARCHAR2(100) | NOT NULL |
-| AREA | VARCHAR2(100) | |
-| ROAD_NAME | VARCHAR2(100) | |
-| ROAD_NO | VARCHAR2(50) | |
-| DATE_OF_INCIDENT | DATE | NOT NULL |
-| CATEGORY | VARCHAR2(50) | |
-| DESCRIPTION | CLOB | |
-| STATUS | VARCHAR2(50) | |
-| MEDIA_FILE | BLOB | |
-| HIDE_IDENTITY | VARCHAR2(5) | |
-| ACCEPTED | VARCHAR2(50) | DEFAULT 'Not Accepted' |
-| POLICE_ID | VARCHAR2(20) | FOREIGN KEY |
-| UPGRADED_BY | VARCHAR2(100) | |
-| ACCEPTED_BY | VARCHAR2(100) | |
-| MEDIA_TYPE | VARCHAR2(50) | |
+| Column Name      | Data Type     | Constraints            |
+| ---------------- | ------------- | ---------------------- |
+| CRIME_ID         | NUMBER        | PRIMARY KEY, IDENTITY  |
+| ID               | NUMBER(5)     | FOREIGN KEY            |
+| USER_NAME        | VARCHAR2(100) | NOT NULL               |
+| FULL_NAME        | VARCHAR2(100) | NOT NULL               |
+| ZILLA            | VARCHAR2(100) | NOT NULL               |
+| UPAZILLA         | VARCHAR2(100) | NOT NULL               |
+| POLICE_STATION   | VARCHAR2(100) | NOT NULL               |
+| AREA             | VARCHAR2(100) |                        |
+| ROAD_NAME        | VARCHAR2(100) |                        |
+| ROAD_NO          | VARCHAR2(50)  |                        |
+| DATE_OF_INCIDENT | DATE          | NOT NULL               |
+| CATEGORY         | VARCHAR2(50)  |                        |
+| DESCRIPTION      | CLOB          |                        |
+| STATUS           | VARCHAR2(50)  |                        |
+| MEDIA_FILE       | BLOB          |                        |
+| HIDE_IDENTITY    | VARCHAR2(5)   |                        |
+| ACCEPTED         | VARCHAR2(50)  | DEFAULT 'Not Accepted' |
+| POLICE_ID        | VARCHAR2(20)  | FOREIGN KEY            |
+| UPGRADED_BY      | VARCHAR2(100) |                        |
+| ACCEPTED_BY      | VARCHAR2(100) |                        |
+| MEDIA_TYPE       | VARCHAR2(50)  |                        |
 
 ### Foreign Keys
 
@@ -116,11 +110,11 @@ POLICE_ID → POLICE_INFO(POLICE_ID)
 
 # Relationships
 
-| Parent Table | Child Table | Relationship |
-|--------------|-------------|--------------|
-| POLICE_INFO | REGISTERED_USERS | One Police Officer ↔ One Registered Police Account (Optional) |
-| REGISTERED_USERS | REPORTED_CRIMES | One User → Many Crime Reports |
-| POLICE_INFO | REPORTED_CRIMES | One Police Officer → Many Assigned Crime Reports |
+| Parent Table     | Child Table      | Relationship                                                  |
+| ---------------- | ---------------- | ------------------------------------------------------------- |
+| POLICE_INFO      | REGISTERED_USERS | One Police Officer ↔ One Registered Police Account (Optional) |
+| REGISTERED_USERS | REPORTED_CRIMES  | One User → Many Crime Reports                                 |
+| POLICE_INFO      | REPORTED_CRIMES  | One Police Officer → Many Assigned Crime Reports              |
 
 ---
 
@@ -192,17 +186,11 @@ POLICE_INFO.POLICE_ID
 ```sql
 CREATE TABLE POLICE_INFO (
     POLICE_ID           VARCHAR2(20)    PRIMARY KEY,
-    NAME                VARCHAR2(100),
-    FATHERS_NAME        VARCHAR2(100),
-    MOTHERS_NAME        VARCHAR2(100),
-    PERMANENT_ADDRESS   VARCHAR2(300),
+    NAME                VARCHAR2(100)  NOT NULL,
     SELECTION_YEAR      NUMBER(4),
     POSTING_AREA        VARCHAR2(150),
     POSTING_YEAR        NUMBER(4),
-    PICTURE_FRONT       BLOB,
-    MERITAL_STATUS      VARCHAR2(50),
-    INJURIES            VARCHAR2(500),
-    POST_NAME           VARCHAR2(50),
+    POST_NAME           VARCHAR2(50)  NOT NULL,
     POSTING_CITY        VARCHAR2(100),
     POLICE_STATION      VARCHAR2(100)
 );

@@ -266,193 +266,21 @@ conn = DBConnection.getConnection();
     conn.close();
 
 }catch(Exception e){
-    out.println("<h3 style='color:red'>Initialization Error: " + e.getMessage() + "</h3>");
+    out.println("<h3 class='error-message'>Initialization Error: " + e.getMessage() + "</h3>");
 }
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Reported Crimes</title>
-<style>
-body{
-    margin:0;
-    padding:0;
-    background:url("images/adminMan.png") no-repeat center center fixed;
-    background-size:cover;
-    font-family:Arial,sans-serif;
-}
-.navbar{
-    background:#FF8C00;
-    padding:14px 20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-.user-info{
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-.user-pic{
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid white;
-}
-.user-name{
-    font-size:24px;
-    font-weight:bold;
-    color:white;
-}
-  .top-right-buttons {
-            position: absolute;
-            top: 20px;
-            left: 80%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-.top-right-buttons a{
-    background:#005F5F;
-    color:white;
-    padding:8px 15px;
-    border-radius:5px;
-    text-decoration:none;
-    margin-right:10px;
-}
-.menu-icon{
-    font-size:28px;
-    cursor:pointer;
-    color:white;
-}
-.dropdown{
-    position:absolute;
-    top:60px;
-    right:20px;
-    background:white;
-    display:none;
-    flex-direction:column;
-    min-width:180px;
-    border-radius:8px;
-    overflow:hidden;
-    z-index:999;
-}
-.dropdown a{
-    padding:12px;
-    text-decoration:none;
-    color:black;
-    border-bottom:1px solid #eee;
-}
-.dropdown a:hover{
-    background:#f2f2f2;
-}
-.show{
-    display:flex;
-}
-.content-box{
-    background:rgba(255,255,255,0.95);
-    max-width:1200px;
-    margin:40px auto;
-    padding:30px;
-    border-radius:12px;
-}
-h2{
-    text-align:center;
-}
-.search-bar{
-    width:60%;
-    margin:auto;
-    display:flex;
-    gap:10px;
-    margin-bottom:25px;
-}
-.search-bar input{
-    flex:1;
-    padding:12px;
-}
-.search-bar button{
-    padding:12px 20px;
-    background:#007BFF;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-.crime-container{
-    background:#f2f2f2;
-    padding:20px;
-    border-radius:10px;
-    margin-bottom:25px;
-    position:relative;
-    color:black;
-}
-.profile-image{
-    width:60px;
-    height:60px;
-    border-radius:50%;
-    object-fit:cover;
-}
-.crime-image{
-    max-width:400px;
-    margin-top:15px;
-    border-radius:8px;
-}
-.edit-btn{
-    background:#005F5F;
-    color:white;
-    border:none;
-    padding:8px 12px;
-    border-radius:5px;
-    cursor:pointer;
-}
-.edit-dropdown{
-    display:none;
-    position:absolute;
-    right:0;
-    top:35px;
-    background:white;
-    border-radius:8px;
-    overflow:hidden;
-    min-width:180px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.3);
-}
-.show-edit{
-    display:block;
-}
-.edit-dropdown a{
-    display:block;
-    padding:12px;
-    text-decoration:none;
-    color:black;
-    border-bottom:1px solid #eee;
-}
-.edit-dropdown a:hover{
-    background:#f2f2f2;
-}
-#notification{
-    position:fixed;
-    top:30px;
-    right:30px;
-    background:#005F5F;
-    color:white;
-    padding:15px 25px;
-    border-radius:8px;
-    display:none;
-    z-index:9999;
-}
-.crime-image,
-.crime-video {
-    max-width: 350px;
-    max-height: 300px;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-</style>
+
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 
-<body class="crs-modern">
+<body class="modern page-myreports">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -516,7 +344,7 @@ h2{
     %>
 
     <div class="crime-container" id="crime<%= crimeId %>">
-        <div style="position:absolute; top:10px; right:10px;">
+        <div class="report-actions">
             <% if(!isAccepted) { %>
                 <button class="edit-btn" onclick="toggleEditMenu('editMenu<%= crimeId %>')">Edit ▼</button>
                 <div id="editMenu<%= crimeId %>" class="edit-dropdown">
@@ -528,7 +356,7 @@ h2{
                     <a href="#" onclick="deleteCrime(<%= crimeId %>); return false;">Delete Post</a>
                 </div>
             <% } else { %>
-                <span style="background:#28a745; color:white; padding:6px 12px; border-radius:5px; font-weight:bold; font-size:13px; display:inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">✓ Approved & Locked</span>
+                <span class="status-tag">✓ Approved & Locked</span>
             <% } %>
         </div>
 
@@ -538,11 +366,12 @@ h2{
     data-fullname="<%= crime.get("fullName") %>">
     <%= displayName %>
 </h3>
+<small class="report-username" id="username<%= crimeId %>"><%= isAnonymous ? "" : "@" + currentUser %></small>
         <p><strong>Category:</strong> <span id="cat<%= crimeId %>"><%= crime.get("category") %></span></p>
         <p><strong>Location:</strong> <span id="loc<%= crimeId %>"><%= crime.get("fullLocation") %></span></p>
         <p><strong>Date:</strong> <span id="date<%= crimeId %>"><%= crime.get("date") %></span></p>
         <p id="desc<%= crimeId %>"><strong>Description:</strong> <span id="descSpan<%= crimeId %>"><%= crime.get("description") %></span></p>
-        <p><strong>Verification:</strong> <span style="font-weight:bold; color: <%= isAccepted ? "#28a745" : "#dc3545" %>;"><%= acceptedField %></span></p>
+        <p><strong>Verification:</strong> <span class="status-badge <%= isAccepted ? "text-success" : "text-danger" %>"><%= acceptedField %></span></p>
         <p><strong>Status:</strong> <%= currentStatus %></p>
 <%
 String mediaData = (String) crime.get("mediaData");
@@ -622,7 +451,7 @@ function sendRequest(params, successCallback){
                 if(response === "success"){
                     successCallback();
                 } else if(response.startsWith("LOCKED:")){
-                    alert(response.replace("LOCKED:", ""));
+                    AppToast.info(response.replace("LOCKED:", ""));
                     window.location.reload(); 
                 } else {
                     showNotification(response);
@@ -652,7 +481,8 @@ function toggleIdentity(crimeId){
             if(newValue === "no"){
 
                 // Show FULL NAME
-                nameEl.innerHTML = fullName;
+                nameEl.textContent = fullName;
+                document.getElementById("username" + crimeId).textContent = "@<%= currentUser %>";
 
                 profileEl.src =
                     "<%= (imageBytes != null)
@@ -665,6 +495,7 @@ function toggleIdentity(crimeId){
 
                 nameEl.innerHTML = "Anonymous";
                 profileEl.src = "images/default.png";
+                document.getElementById("username" + crimeId).textContent = "";
                 identityLink.innerText = "Display Identity";
 
             }
@@ -689,14 +520,14 @@ function editCategory(crimeId) {
     }
 
     catSpan.innerHTML = 
-        "<div style='background:#fff; padding:12px; border:1px solid #ccc; border-radius:6px; margin-top:5px; display:inline-block; width:100%; box-sizing:border-box;'>" +
-            "<label style='font-weight:bold; color:#333; margin-right:10px;'>Select Category:</label>" +
-            "<select id='editCatSel" + crimeId + "' style='padding:6px; border:1px solid #ccc; border-radius:4px; width:50%; margin-bottom:10px;'>" +
+        "<div class='edit-panel'>" +
+            "<label class='editor-label'>Select Category:</label>" +
+            "<select id='editCatSel" + crimeId + "' class='editor-select'>" +
                 optionsHtml +
             "</select>" +
             "<br>" +
-            "<button type='button' id='saveCatBtn" + crimeId + "' style='background:#005F5F; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold;'>Save</button>" +
-            "<button type='button' id='cancelCatBtn" + crimeId + "' style='background:#888; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left:5px;'>Cancel</button>" +
+            "<button type='button' id='saveCatBtn" + crimeId + "' class='editor-save'>Save</button>" +
+            "<button type='button' id='cancelCatBtn" + crimeId + "' class='editor-cancel'>Cancel</button>" +
         "</div>";
 
     document.getElementById("cancelCatBtn" + crimeId).onclick = function() { catSpan.innerHTML = originalHTML; };
@@ -735,39 +566,39 @@ function editLocation(crimeId) {
     const originalHTML = locSpan.innerHTML;
 
     locSpan.innerHTML = 
-        "<div style='background: #ffffff; padding: 15px; border: 1px solid #ccc; border-radius: 6px; margin-top: 10px; display: inline-block; width: 100%; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>" +
-        "<div style='margin-bottom: 8px;'>" +
-        "<label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Zilla:</label>" +
-        "<select id='editZilla" + crimeId + "' style='width:63%; padding:6px; border:1px solid #ccc; border-radius:4px;' onchange='populateUpazillas(" + crimeId + ")'>" +
+        "<div class='edit-panel'>" +
+        "<div class='field-gap'>" +
+        "<label class='location-label'>Zilla:</label>" +
+        "<select id='editZilla" + crimeId + "' class='location-select' onchange='populateUpazillas(" + crimeId + ")'>" +
             "<option value=''>Select Zilla</option>" +
         "</select>" +
     "</div>" +
 
-    "<div style='margin-bottom: 8px;'>" +
-        "<label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Upazilla:</label>" +
-        "<select id='editUpazilla" + crimeId + "' style='width:63%; padding:6px; border:1px solid #ccc; border-radius:4px;' onchange='populatePoliceStations(" + crimeId + ")'>" +
+    "<div class='field-gap'>" +
+        "<label class='location-label'>Upazilla:</label>" +
+        "<select id='editUpazilla" + crimeId + "' class='location-select' onchange='populatePoliceStations(" + crimeId + ")'>" +
             "<option value=''>Select Upazilla</option>" +
         "</select>" +
     "</div>" +
 
-    "<div style='margin-bottom: 8px;'>" +
-        "<label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Police Station:</label>" +
-        "<select id='editPS" + crimeId + "' style='width:63%; padding:6px; border:1px solid #ccc; border-radius:4px;' onchange='populateAreas(" + crimeId + ")'>" +
+    "<div class='field-gap'>" +
+        "<label class='location-label'>Police Station:</label>" +
+        "<select id='editPS" + crimeId + "' class='location-select' onchange='populateAreas(" + crimeId + ")'>" +
             "<option value=''>Select Police Station</option>" +
         "</select>" +
     "</div>" +
 
-    "<div style='margin-bottom: 8px;'>" +
-        "<label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Area:</label>" +
-        "<select id='editArea" + crimeId + "' style='width:63%; padding:6px; border:1px solid #ccc; border-radius:4px;'>" +
+    "<div class='field-gap'>" +
+        "<label class='location-label'>Area:</label>" +
+        "<select id='editArea" + crimeId + "' class='location-select'>" +
             "<option value=''>Select Area</option>" +
         "</select>" +
     "</div>" +
-    "<div style='margin-bottom: 8px;'><label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Road Name:</label> <input type='text' id='editRoadName" + crimeId + "' value='" + currentRoadName + "' style='width: 60%; padding: 6px; border:1px solid #ccc; border-radius:4px;'></div>" +
-            "<div style='margin-bottom: 12px;'><label style='display:inline-block; width:110px; font-weight:bold; color:#333;'>Road No:</label> <input type='text' id='editRoadNo" + crimeId + "' value='" + currentRoadNo + "' style='width: 60%; padding: 6px; border:1px solid #ccc; border-radius:4px;'></div>" +
+    "<div class='field-gap'><label class='location-label'>Road Name:</label> <input type='text' id='editRoadName" + crimeId + "' value='" + currentRoadName + "' class='location-input'></div>" +
+            "<div class='editor-gap'><label class='location-label'>Road No:</label> <input type='text' id='editRoadNo" + crimeId + "' value='" + currentRoadNo + "' class='location-input'></div>" +
             "<div>" +
-                "<button type='button' id='saveLocBtn" + crimeId + "' style='background:#005F5F; color:white; border:none; padding:6px 15px; margin-right:5px; border-radius:4px; cursor:pointer; font-weight:bold;'>Save</button>" +
-                "<button type='button' id='cancelLocBtn" + crimeId + "' style='background:#888; color:white; border:none; padding:6px 15px; border-radius:4px; cursor:pointer; font-weight:bold;'>Cancel</button>" +
+                "<button type='button' id='saveLocBtn" + crimeId + "' class='location-save'>Save</button>" +
+                "<button type='button' id='cancelLocBtn" + crimeId + "' class='location-cancel'>Cancel</button>" +
             "</div>" +
         "</div>";
 
@@ -839,12 +670,12 @@ function editDate(crimeId){
     const originalHTML = dateSpan.innerHTML;
 
     dateSpan.innerHTML = 
-        "<div style='background:#fff; padding:12px; border:1px solid #ccc; border-radius:6px; margin-top:5px; display:inline-block; width:100%; box-sizing:border-box;'>" +
-            "<label style='font-weight:bold; color:#333; margin-right:10px;'>Incident Date:</label>" +
-            "<input type=" + "'date'" + " id='editDateInput" + crimeId + "' value='" + currentDate + "' style='padding:6px; border:1px solid #ccc; border-radius:4px; width:50%; margin-bottom:10px;'>" +
+        "<div class='edit-panel'>" +
+            "<label class='editor-label'>Incident Date:</label>" +
+            "<input type=" + "'date'" + " id='editDateInput" + crimeId + "' value='" + currentDate + "' class='editor-select'>" +
             "<br>" +
-            "<button type='button' id='saveDateBtn" + crimeId + "' style='background:#005F5F; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold;'>Save</button>" +
-            "<button type='button' id='cancelDateBtn" + crimeId + "' style='background:#888; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left:5px;'>Cancel</button>" +
+            "<button type='button' id='saveDateBtn" + crimeId + "' class='editor-save'>Save</button>" +
+            "<button type='button' id='cancelDateBtn" + crimeId + "' class='editor-cancel'>Cancel</button>" +
         "</div>";
 
     document.getElementById("cancelDateBtn" + crimeId).onclick = function() { dateSpan.innerHTML = originalHTML; };
@@ -869,11 +700,11 @@ function editDescription(crimeId){
     const originalHTML = descSpan.innerHTML;
 
     descSpan.innerHTML = 
-        "<div style='background:#fff; padding:12px; border:1px solid #ccc; border-radius:6px; margin-top:5px; display:block; width:100%; box-sizing:border-box;'>" +
-            "<textarea id='editDescText" + crimeId + "' style='width:100%; height:100px; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; margin-bottom:10px; resize:vertical;'>" + currentDesc + "</textarea>" +
+        "<div class='edit-panel'>" +
+            "<textarea id='editDescText" + crimeId + "' class='edit-panel'>" + currentDesc + "</textarea>" +
             "<br>" +
-            "<button type='button' id='saveDescBtn" + crimeId + "' style='background:#005F5F; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold;'>Save</button>" +
-            "<button type='button' id='cancelDescBtn" + crimeId + "' style='background:#888; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left:5px;'>Cancel</button>" +
+            "<button type='button' id='saveDescBtn" + crimeId + "' class='editor-save'>Save</button>" +
+            "<button type='button' id='cancelDescBtn" + crimeId + "' class='editor-cancel'>Cancel</button>" +
         "</div>";
 
     document.getElementById("cancelDescBtn" + crimeId).onclick = function() { descSpan.innerHTML = originalHTML; };
@@ -914,14 +745,8 @@ function filterCrimes(){
 }
 
 function showNotification(message){
-    if(message.startsWith("ERROR:") || message.toLowerCase().includes("failed")) {
-        alert("Database processing failed:\n" + message);
-        return;
-    }
-    const notif = document.getElementById("notification");
-    notif.innerText = message;
-    notif.style.display = "block";
-    setTimeout(()=>{ notif.style.display = "none"; }, 3000);
+    const type = /ERROR:|failed/i.test(message) ? 'error' : 'success';
+    AppToast[type](message);
 }
 
 

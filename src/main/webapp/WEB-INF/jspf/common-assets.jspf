@@ -1,2 +1,2 @@
-<link rel="stylesheet" href="assets/css/app.css">
-<script src="assets/js/theme.js"></script>
+<link rel="stylesheet" href="<%= request.getContextPath() %>/styles/app.css?v=20261108-2">
+<script src="<%= request.getContextPath() %>/js/app.js?v=20261108-2"></script>

@@ -12,56 +12,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
-<div class="crs-auth-page">
-    <section class="crs-auth-visual">
-        <div class="crs-auth-copy">
-            <a class="crs-brand" href="MainHome.jsp" style="color:#fff; margin-bottom:26px; display:inline-flex;">
-                <span class="crs-brand-mark">◈</span>
+<body class="modern page-login">
+<div class="auth-page">
+    <section class="auth-visual">
+        <div class="auth-copy">
+            <a class="brand brand-link" href="MainHome.jsp">
+                <img class="brand-mark" src="images/crslogo.png" alt="">
                 <span>Crime Report System</span>
             </a>
             <h1>Your report can help make the community safer.</h1>
-            <p>Sign in to submit reports, follow investigations, and keep your information up to date.</p>
+    
         </div>
     </section>
 
-    <section class="crs-auth-panel">
-        <div class="crs-auth-box">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-                <button class="crs-btn crs-theme-toggle" type="button" onclick="CRSTheme.toggle()" aria-label="Toggle theme"><span data-theme-icon>☾</span></button>
+    <section class="auth-panel">
+        <div class="auth-box">
+            <div class="toolbar-end">
+                
             </div>
-            <div class="crs-auth-head">
-                <a class="crs-brand" href="MainHome.jsp"><span class="crs-brand-mark">◈</span><span>Crime Report System</span></a>
+            <div class="auth-head">
+                <a class="brand" href="MainHome.jsp"><img class="brand-mark" src="images/crslogo.png" alt=""><span>Crime Report System</span></a>
                 <h2>Welcome back</h2>
                 <p>Sign in to continue to your dashboard.</p>
             </div>
 
-            <form method="post" action="" class="crs-form">
-                <div class="crs-field">
+            <form method="post" action="" class="form">
+                <div class="field">
                     <label for="username">Username</label>
                     <input id="username" type="text" name="username" placeholder="Enter your username" required>
                 </div>
-                <div class="crs-field">
+                <div class="field">
                     <label for="email">Email</label>
                     <input id="email" type="email" name="email" placeholder="you@example.com" required>
                 </div>
-                <div class="crs-field">
+                <div class="field">
                     <label for="password">Password</label>
-                    <div style="position:relative;">
-                        <input id="password" type="password" name="password" placeholder="Enter your password" required style="padding-right:44px;">
-                        <button type="button" onclick="togglePassword()" aria-label="Show password" style="position:absolute;right:8px;top:3px;width:38px;height:38px;border:0;background:transparent;color:var(--text-muted);cursor:pointer;box-shadow:none;">
+                    <div class="input-wrap">
+                        <input id="password" type="password" name="password" placeholder="Enter your password" required class="password-input">
+                        <button type="button" onclick="togglePassword()" aria-label="Show password" class="password-eye">
                             <i id="toggleIcon" class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
-                <div class="crs-form-meta">
-                    <span>Secure sign in</span>
-                    <a href="ForgotPassword.jsp">Forgot password?</a>
-                </div>
+                
                 <button type="submit">Sign in <span>→</span></button>
             </form>
 
-            <div class="crs-auth-footer">Don't have an account? <a href="Registration.jsp">Create one</a></div>
+            <div class="auth-footer">Don't have an account? <a href="Registration.jsp">Create one</a></div>
 
             <%
             if ("POST".equalsIgnoreCase(request.getMethod())) {
@@ -96,17 +93,17 @@ conn = DBConnection.getConnection();
                             redirectPage = "UserHome.jsp";
                         }
             %>
-                        <div class="crs-message success" style="margin-top:16px;">Login successful. Redirecting to your dashboard...</div>
-                        <script>setTimeout(function(){ window.location.href='<%= redirectPage %>'; }, 300);</script>
+                        <div class="message success message-gap">Login successful. Redirecting to your dashboard...</div>
+                        <script>setTimeout(function(){ sessionStorage.setItem('app-toast', JSON.stringify({message:'Signed in successfully.',type:'success'})); window.location.href='<%= redirectPage %>'; }, 300);</script>
             <%
                     } else {
             %>
-                        <div class="crs-message error" style="margin-top:16px;">Invalid credentials. Please check your details and try again.</div>
+                        <div class="message error message-gap">Invalid credentials. Please check your details and try again.</div>
             <%
                     }
                 } catch (Exception e) {
             %>
-                    <div class="crs-message error" style="margin-top:16px;">Unable to sign in: <%= e.getMessage() %></div>
+                    <div class="message error message-gap">Unable to sign in: <%= e.getMessage() %></div>
             <%
                 } finally {
                     try { if (rs != null) rs.close(); } catch (Exception e) {}

@@ -83,7 +83,7 @@ Connection conn = DBConnection.getConnection();
 
             conn.close();
         } catch (Exception e) {
-            out.println("<p style='color:red;'>Action Error: " + e.getMessage() + "</p>");
+            out.println("<p class='message error'>Action Error: " + e.getMessage() + "</p>");
         }
     }
 
@@ -94,209 +94,13 @@ Connection conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Panel - User Management</title>
-    <style>
-    body {
-            margin: 0;
-            padding: 0;
-            background: url("images/adminMan.png") no-repeat center center/cover;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .navbar {
-            background-color: #FF8C00;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .menu-icon {
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .dropdown {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background-color: white;
-            color: black;
-            border-radius: 6px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            display: none;
-            flex-direction: column;
-            min-width: 180px;
-            z-index: 999;
-        }
-
-        .dropdown a {
-            padding: 12px 16px;
-            text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            display: block;
-        }
-
-        .dropdown a:hover {
-            background-color: #f2f2f2;
-        }
-
-        .show {
-            display: flex;
-        }
-
-         .top-right-buttons {
-            position: absolute;
-            top: 30px;
-            left: 67%;
-            transform: translateX(0%);
-        }
-        .top-right-buttons a {
-            background-color: #005F5F;
-            color: white;
-            padding: 8px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-        }
-        .top-right-buttons a:hover {
-            background-color: #008C8C;
-            color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .content-box {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 1200px;
-            margin: 20px auto;
-            color: black;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #999;
-            padding: 10px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #FFA500;
-            color: white;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        select, input[type="submit"] {
-            padding: 6px 10px;
-            border-radius: 4px;
-            border: none;
-        }
-
-        .btn-change {
-            background-color: #007BFF;
-            color: white;
-            cursor: pointer;
-        }
-
-        .btn-delete {
-            background-color: red;
-            color: white;
-            cursor: pointer;
-        }
-
-        img.profile {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease;
-        }
-
-        .user-pic:hover {
-            transform: scale(1.1);
-        }
-
-        .user-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            letter-spacing: 0.5px;
-        }
-
-        .search-bar {
-            width: 60%;
-            max-width: 500px;
-            margin: 0 auto 20px auto;
-            display: block;
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-        .search-bar form {
-            display: flex;
-            gap: 10px;
-        }
-        .search-bar input[type="text"] {
-            flex-grow: 1;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .search-bar button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007BFF;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .search-bar button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-usermanage">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -309,7 +113,7 @@ Connection conn = DBConnection.getConnection();
             %>
                 <img src="data:image/jpeg;base64,<%= base64Image %>" alt="Profile Picture" class="user-pic">
             <% } else { %>
-                <img src="images/default_profile.png" alt="Default Profile Picture" class="user-pic">
+                <img src="images/default.png" alt="Default Profile Picture" class="user-pic">
             <% } %>
             <span class="user-name"> <%= currentUserName %></span>
         </div>
@@ -365,6 +169,7 @@ conn = DBConnection.getConnection();
         rs = pstmt.executeQuery();
 %>
 
+    <div class="directory-table" role="region" aria-label="Directory results" tabindex="0">
     <table>
         <tr>
             <th>Profile</th>
@@ -402,9 +207,9 @@ conn = DBConnection.getConnection();
         <tr>
             <td>
                 <% if (!base64Image.equals("")) { %>
-                    <img src="data:image/jpeg;base64,<%= base64Image %>" class="profile" />
+                    <img src="data:image/jpeg;base64,<%= base64Image %>" class="directory-avatar" />
                 <% } else { %>
-                    No Image
+                    <img src="images/default.png" class="directory-avatar" alt="Default profile">
                 <% } %>
             </td>
             <td><%= fullName %></td>
@@ -435,9 +240,10 @@ conn = DBConnection.getConnection();
         </tr>
 <% } %>
     </table>
+    </div>
 
 <%
-    } catch (Exception e) { out.println("<p style='color:red;'>Database Error: " + e.getMessage() + "</p>"); }
+    } catch (Exception e) { out.println("<p class='message error'>Database Error: " + e.getMessage() + "</p>"); }
     finally {
         if(rs != null) try{rs.close();} catch(Exception ignored){}
         if(pstmt != null) try{pstmt.close();} catch(Exception ignored){}

@@ -197,7 +197,7 @@ conn = DBConnection.getConnection();
                 crime.put("displayUsername", "");
             } else {
                 crime.put("displayName", fullNameReal);
-                crime.put("displayUsername", " (Username: " + userNameReal + ")");
+                crime.put("displayUsername", "@" + userNameReal);
             }
 
             crimeList.add(crime);
@@ -206,7 +206,7 @@ conn = DBConnection.getConnection();
         ps.close();
     }
     catch(Exception e){
-        out.println("<p style='color:red;'>Error: " + e.getMessage() + "</p>");
+        out.println("<p class='message error'>Error: " + e.getMessage() + "</p>");
     }
     finally{
         try{ if(rs != null) rs.close(); }catch(Exception e){}
@@ -218,194 +218,13 @@ conn = DBConnection.getConnection();
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Report Management</title>
-<style>
-body{
-    margin:0;
-    padding:0;
-    font-family:Arial,sans-serif;
-    background:url("images/adminMan.png") no-repeat center center fixed;
-    background-size:cover;
-}
-.navbar{
-    background:#FF8C00;
-    padding:14px 20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-.menu-icon {
-    font-size: 26px;
-    cursor: pointer;
-}
-.dropdown {
-    position: absolute;
-    top: 60px;
-    right: 20px;
-    background-color: white;
-    color: black;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    display: none;
-    flex-direction: column;
-    min-width: 180px;
-    z-index: 999;
-}
-.dropdown a {
-    padding: 12px 16px;
-    text-decoration: none;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    display: block;
-}
-.dropdown a:hover {
-    background-color: #f2f2f2;
-}
-.show {
-    display: flex;
-}
-.top-right-buttons {
-    position: absolute;
-    top: 30px;
-    left: 80%;
-    transform: translateX(0%);
-}
-.top-right-buttons a {
-    background-color: #005F5F;
-    color: white;
-    padding: 8px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 10px;
-    transition: all 0.3s ease;
-}
-.top-right-buttons a:hover {
-    background-color: #008C8C;
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-.user-info{
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-.user-pic{
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid white;
-}
-.user-name{
-    color:white;
-    font-size:24px;
-    font-weight:bold;
-}
-.content-box{
-    width:90%;
-    max-width:1200px;
-    margin:40px auto;
-    background:rgba(255,255,255,0.95);
-    border-radius:12px;
-    padding:30px;
-}
-h2{
-    text-align:center;
-    color:black;
-}
-.search-bar {
-    width: 60%;
-    max-width: 500px;
-    margin: 0 auto 20px auto;
-    display: block;
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-.search-bar form {
-    display: flex;
-    gap: 10px;
-}
-.search-bar input[type="text"] {
-    flex-grow: 1;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-.search-bar button {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-.search-bar button:hover {
-    background-color: #0056b3;
-}
-.crime-container{
-    border:1px solid #ccc;
-    padding:20px;
-    margin:25px auto;
-    border-radius:10px;
-    background:white;
-    color:black;
-    width:85%;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-.profile-image{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid #007BFF;
-    float:left;
-    margin-right:15px;
-}
-.crime-image{
-    width:100%;
-    max-width:600px;
-    height:auto;
-    display:block;
-    margin:15px auto;
-    border-radius:10px;
-}
-.status-buttons{
-    margin-top:20px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:15px;
-}
-.status-buttons form{
-    margin:0;
-    display:inline-flex;
-}
-.status-buttons .btn{
-    min-width:140px;
-    text-align:center;
-}
-.btn{
-    padding:10px 18px;
-    border:none;
-    border-radius:6px;
-    color:white;
-    cursor:pointer;
-    font-weight:bold;
-    min-width:140px;
-    transition:0.3s ease;
-}
-.allow-btn{ background:#28A745; }
-.allow-btn:hover{ background:#1f8f39; }
-.delete-btn{ background:#DC3545; }
-.delete-btn:hover{ background:#b52a37; }
-</style>
+
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
-<body class="crs-modern">
+<body class="modern page-reportman">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -429,11 +248,11 @@ h2{
     </div>
 </div>
 
-<div class="content-box">
+<div class="post-content-box">
     <h2>Report Management Panel</h2>
 
     <% if(!message.isEmpty()){ %>
-        <p style="color:green; text-align:center; font-weight:bold;"><%= message %></p>
+        <p class="message" data-toast><%= message %></p>
     <% } %>
 
     <div class="search-bar">
@@ -470,10 +289,8 @@ h2{
 
         <h3>
             <%= crime.get("displayName") %>
-            <%= crime.get("displayUsername") %>
+            <small class="report-username"><%= crime.get("displayUsername") %></small>
         </h3>
-
-        <p><strong>Mobile:</strong> <%= crime.get("mobileNo") %></p>
         <p><strong>Category:</strong> <%= crime.get("category") %></p>
         <p><strong>Location:</strong> <%= crime.get("fullLocation") %></p>
         <p><strong>Date:</strong> <%= crime.get("date") %></p>
@@ -482,14 +299,14 @@ h2{
         <p><strong>Status:</strong> <%= status %></p>
         
         <p><strong>Verification State:</strong> 
-           <span style="font-weight:bold; color: <%= isAllowedByAdmin ? "#28A745" : "#DC3545" %>;">
+           <span class="status-badge <%= isAllowedByAdmin ? "text-success" : "text-danger" %>">
                <%= dbAcceptedField %>
            </span>
         </p>
         
         <% if(isAllowedByAdmin) { %>
-            <p style="color: #005F5F; font-weight: bold;">
-                <strong>Accepted By:</strong> <%= acceptedBy %>
+            <p class="text-bold">
+                <strong>Accepted By:</strong> <%= acceptedBy == null || String.valueOf(acceptedBy).trim().isEmpty() ? "Not reviewed" : "@" + acceptedBy %>
             </p>
         <% } %>
 
@@ -533,7 +350,7 @@ if (mediaData != null && !mediaData.isEmpty()) {
 
         <div class="status-buttons">
             <% if(isAllowedByAdmin) { %>
-                <button class="btn" style="background:gray;" disabled>ACCEPTED</button>
+                <button class="btn" disabled>ACCEPTED</button>
 
                 <form method="post" onsubmit="return confirm('Delete this report?');">
                     <input type="hidden" name="crimeId" value="<%= crime.get("crimeId") %>">
@@ -559,7 +376,7 @@ if (mediaData != null && !mediaData.isEmpty()) {
         }
     } else { 
     %>
-        <p style="text-align:center; color:black; font-size:18px;">No crime reports found.</p>
+        <p class="centered-lead">No crime reports found.</p>
     <% } %>
 </div>
 

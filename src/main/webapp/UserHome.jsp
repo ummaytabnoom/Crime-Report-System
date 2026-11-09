@@ -39,7 +39,7 @@ updateConn = DBConnection.getConnection();
             updatePs.executeUpdate();
 
         } catch(Exception ex) {
-            out.println("<p style='color:red;'>Status Update Failed: "
+            out.println("<p class='message error'>Status Update Failed: "
                     + ex.getMessage() + "</p>");
         } finally {
             if(updatePs != null) updatePs.close();
@@ -185,7 +185,7 @@ Connection conn = DBConnection.getConnection();
                 crime.put("displayUsername", "");
             } else {
                 crime.put("displayName", fullNameReal);
-                crime.put("displayUsername", " (Username: " + userNameReal + ")");
+                crime.put("displayUsername", "@" + userNameReal);
             }
 
             crimeList.add(crime);
@@ -196,215 +196,21 @@ Connection conn = DBConnection.getConnection();
         conn.close();
 
     } catch (Exception e) {
-        out.println("<p style='color:red;'>Database Error: " + e.getMessage() + "</p>");
+        out.println("<p class='message error'>Database Error: " + e.getMessage() + "</p>");
     }
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>User Home</title>
-<style>
-body{
-    margin:0;
-    padding:0;
-    background:url("images/adminMan.png") no-repeat center center fixed;
-    background-size:cover;
-    font-family:Arial,sans-serif;
-    color:white;
-}
-.navbar{
-    background-color:#FF8C00;
-    padding:14px 20px;
-    display:flex;
-    justify-content:space-between;
-}
-.menu-icon{
-    font-size:26px;
-    cursor:pointer;
-    position:relative;
-    top:10px;
-}
-.dropdown{
-    position:absolute;
-    top:60px;
-    right:20px;
-    background-color:white;
-    color:black;
-    border-radius:6px;
-    display:none;
-    flex-direction:column;
-    min-width:180px;
-    z-index:999;
-}
-.dropdown a{
-    padding:12px 16px;
-    text-decoration:none;
-    color:#333;
-    border-bottom:1px solid #eee;
-}
-.dropdown a:hover{ background-color:#f2f2f2; }
-.show{ display:flex; }
-.user-info{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-}
-.user-pic{
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid #fff;
-}
-.user-name{
-    font-weight:bold;
-    color:white;
-    font-size:25px;
-}
-.crime-container{
-    border:1px solid #ccc;
-    padding:15px;
-    margin:25px auto;
-    border-radius:10px;
-    background-color:#f2f2f2;
-    color:black;
-    width:80%;
-    max-width:800px;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-.profile-image{
-    width:60px;
-    height:60px;
-    object-fit:cover;
-    border-radius:50%;
-    float:left;
-    margin-right:15px;
-    border:2px solid #007BFF;
-}
-.crime-image{
-    width:100%;
-    max-width:600px;
-    height:auto;
-    display:block;
-    margin-top:15px;
-    border-radius:8px;
-}
-.top-right-buttons{
-    position:absolute;
-    top:30px;
-    left:75%;
-}
-.top-right-buttons a{
-    background-color:#005F5F;
-    color:white;
-    padding:8px 20px;
-    text-decoration:none;
-    border-radius:5px;
-    margin-right:10px;
-}
-.search-bar{
-    width:60%;
-    max-width:650px;
-    margin:0 auto 25px auto;
-    background:#f5f5f5;
-    border:1px solid #dcdcdc;
-    border-radius:8px;
-    padding:12px 18px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    box-sizing:border-box;
-}
-.search-bar input[type="text"]{
-    flex-grow:1;
-    padding:12px 15px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:14px;
-    outline:none;
-    background:white;
-    box-sizing:border-box;
-}
-.search-bar input[type="text"]:focus{
-    border-color:#007BFF;
-    box-shadow:0 0 5px rgba(0,123,255,0.3);
-}
-.search-bar button{
-    padding:11px 22px;
-    border:none;
-    border-radius:6px;
-    background-color:#007BFF;
-    color:white;
-    font-size:14px;
-    cursor:pointer;
-    transition:0.3s ease;
-}
-.search-bar button:hover{ background-color:#0056b3; }
-.content-box{
-    background-color:rgba(255,255,255,0.95);
-    padding:30px;
-    border-radius:10px;
-    max-width:1200px;
-    margin:40px auto;
-    color:black;
-}
-h2{
-    text-align:center;
-    margin-bottom:20px;
-    color:black;
-}
-.user-info-btn{
-    background-color:#007BFF;
-    color:white;
-    padding:6px 16px;
-    border:none;
-    border-radius:20px;
-    cursor:pointer;
-    font-weight:bold;
-}
-.status-btn-container{
-    margin-top:15px;
-    display: flex;
-    gap: 10px;
-}
-.status-btn{
-    padding:8px 16px;
-    border:none;
-    border-radius:6px;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
-.pending-btn{ background-color:orange; }
-.ongoing-btn{ background-color:#007BFF; }
-.resolved-btn{ background-color:green; }
 
-#userModal{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
-    justify-content:center;
-    align-items:center;
-    z-index:1000;
-}
-#userModalContent{
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    max-width:400px;
-    text-align:center;
-    color:black;
-}
-</style>
 <%@ include file="/WEB-INF/jspf/common-assets.jspf" %>
 </head>
 
-<body class="crs-modern">
+<body class="modern page-userhome">
 <%@ include file="/WEB-INF/jspf/navbar.jspf" %>
 
 
@@ -477,14 +283,13 @@ if (crimeList != null && !crimeList.isEmpty()) {
                 Anonymous (View Info)
             </button>
         <% } else { %>
-            <span style="background:#6c757d; color:white; padding:6px 16px; border-radius:20px; font-weight:bold; display:inline-block;">
+            <span class="status-label">
                 Anonymous
             </span>
         <% } %>
     <% } else { %>
         <%= displayName %>
-        <%= crime.get("displayUsername") %>
-        <span style="color:gray; font-size:14px;">| Mobile: <%= crime.get("mobileNo") %></span>
+        <small class="report-username"><%= crime.get("displayUsername") %></small>
     <% } %>
     </h3>
 
@@ -495,8 +300,8 @@ if (crimeList != null && !crimeList.isEmpty()) {
     <p><strong>Status:</strong> <%= currentStatus %></p>
     
     <%-- Metadata tags reporting vetting accountability --%>
-    <p style="font-size:13px; color:#555; margin-top:-5px;">
-        <span style="margin-right:15px;"><strong>Vetted By:</strong> <%= approvedAdmin %></span>
+    <p class="text-caption">
+        <span class="item-gap"><strong>Vetted By:</strong> <%= approvedAdmin == null || String.valueOf(approvedAdmin).trim().isEmpty() ? "Not reviewed" : "@" + approvedAdmin %></span>
         <% if(updatingOfficer != null && !updatingOfficer.trim().isEmpty()) { %>
             <span><strong>Assigned Officer:</strong> <%= updatingOfficer %></span>
         <% } %>
@@ -546,7 +351,7 @@ if (mediaData != null && !mediaData.isEmpty()) {
     }
 } else {
 %>
-<p style="text-align:center; color:black; font-size:18px;">No approved crime records found.</p>
+<p class="centered-lead">No approved crime records found.</p>
 <%
 }
 %>
@@ -554,12 +359,11 @@ if (mediaData != null && !mediaData.isEmpty()) {
 
 <div id="userModal">
     <div id="userModalContent">
-        <img id="modalProfileImg" src="" style="width:80px; height:80px; border-radius:50%; margin:0 auto 10px auto; display:block;">
+        <img id="modalProfileImg" src="" class="profile-avatar">
         <h3>User Information</h3>
         <p id="modalFullName"></p>
         <p id="modalUsername"></p>
-        <p id="modalMobile"></p>
-        <button onclick="closeModal()" style="padding: 6px 18px; cursor: pointer;">Close</button>
+        <button onclick="closeModal()" class="compact-button">Close</button>
     </div>
 </div>
 
@@ -573,7 +377,6 @@ function showUserInfo(fullName, userName, mobile, profileImg){
     }
     document.getElementById("modalFullName").innerText = "Full Name: " + fullName;
     document.getElementById("modalUsername").innerText = "Username: " + userName;
-    document.getElementById("modalMobile").innerText = "Mobile No: " + mobile;
     document.getElementById("userModal").style.display = "flex";
 }
 
