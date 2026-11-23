@@ -1680,10 +1680,17 @@ input[type="submit"]:hover,
 }
 .input-wrapper {
   position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
+
 .input-wrapper input {
+  width: 100%;
   padding-right: 44px !important;
+  box-sizing: border-box;
 }
+
 .toggle-icon,
 .input-wrapper i {
   position: absolute;
@@ -1692,6 +1699,7 @@ input[type="submit"]:hover,
   transform: translateY(-50%);
   cursor: pointer;
   color: var(--text-muted);
+  z-index: 2;
 }
 .search-bar {
   display: flex;
@@ -1791,13 +1799,24 @@ input[type="submit"]:hover,
 .btn-group,
 .status-buttons {
   display: flex;
-  flex-direction: row; /* Force horizontal alignment */
+  flex-direction: row;
+  flex-wrap: nowrap; /* Forces all buttons onto ONE single line */
   align-items: center;
   gap: 8px;
   margin-top: 18px;
 }
+
+.btn-group form {
+  margin: 0;
+  display: inline-flex; /* Prevents forms from acting like full-width blocks */
+}
+
+.btn-group .status-btn,
 .status-buttons .btn {
-  white-space: nowrap; /* Prevent text from stacking vertically */
+  white-space: nowrap;          /* Keeps text inside each button on one line */
+  width: auto;                  /* Prevents narrow fixed-width squeezing */
+  writing-mode: horizontal-tb;  /* Forces normal left-to-right text */
+  text-orientation: mixed;
 }
 .delete-btn,
 .btn-delete {
@@ -1811,6 +1830,16 @@ input[type="submit"]:hover,
   background: var(--primary-soft);
   color: var(--primary);
 }
+
+.r-btn, .badge-resolved {
+	background-color: #41dc8e;
+	color: black;
+}
+
+.r-btn:hover {
+	background-color: #cbf5dd;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

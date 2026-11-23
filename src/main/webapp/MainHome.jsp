@@ -21,7 +21,7 @@
         </a>
         <nav class="nav-links" aria-label="Main navigation">
             <a href="#home">Home</a>
-            <a href="#mission">About</a>
+            <a href="#why-system">About</a>
             <a href="#features">Features</a>
         </nav>
         <div class="nav-actions">

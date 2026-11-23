@@ -49,7 +49,7 @@ conn = DBConnection.getConnection();
 
         // Get all reported crimes from the PERMANENT_REPORTS table
         PreparedStatement ps = conn.prepareStatement(
-                "SELECT * FROM REPORTED_CRIMES ORDER BY CRIME_ID DESC");
+                "SELECT * FROM REPORTED_CRIMES WHERE UPPER(TRIM(ACCEPTED)) = 'ACCEPTED' ORDER BY CRIME_ID DESC");
         ResultSet crimesRs = ps.executeQuery();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -74,8 +74,10 @@ conn = DBConnection.getConnection();
                                   crimesRs.getString("ROAD_NO");
             crime.put("fullLocation", fullLocation);
 
-            byte[] demoBytes = crimesRs.getBytes("MEDIA_FILE");
-            crime.put("demoImg", (demoBytes != null) ? Base64.getEncoder().encodeToString(demoBytes) : "");
+            byte[] mediaBytes = crimesRs.getBytes("MEDIA_FILE");
+            String mediaType = crimesRs.getString("MEDIA_TYPE");
+            crime.put("mediaType", mediaType);
+            crime.put("mediaData", mediaBytes != null ? Base64.getEncoder().encodeToString(mediaBytes) : "");
 
             // Fetch reporter info
             PreparedStatement userStmt = conn.prepareStatement(
@@ -180,11 +182,17 @@ conn = DBConnection.getConnection();
     <p><strong>Status:</strong> <%= crime.get("status") %></p>
     <p><strong>Description:</strong> <%= crime.get("description") %></p>
 
-    <% String demoImg = (String) crime.get("demoImg"); %>
-    <% if(demoImg != null && !demoImg.isEmpty()) { %>
-        <img src="data:image/jpeg;base64,<%= demoImg %>" class="crime-image" alt="Crime Image"/>
+    <% String mediaData = (String) crime.get("mediaData");
+       String mediaType = (String) crime.get("mediaType");
+       if (mediaData != null && !mediaData.isEmpty() && mediaType != null && mediaType.startsWith("image/")) { %>
+        <img src="data:<%= mediaType %>;base64,<%= mediaData %>" class="crime-image" alt="Crime evidence"/>
+    <% } else if (mediaData != null && !mediaData.isEmpty() && mediaType != null && mediaType.startsWith("video/")) { %>
+        <video class="crime-video" controls preload="metadata">
+            <source src="data:<%= mediaType %>;base64,<%= mediaData %>" type="<%= mediaType %>">
+            Your browser does not support the video tag.
+        </video>
     <% } else { %>
-        <p><i>No crime image uploaded.</i></p>
+        <p><i>No media uploaded.</i></p>
     <% } %>
 </div>
 <% } } else { %>

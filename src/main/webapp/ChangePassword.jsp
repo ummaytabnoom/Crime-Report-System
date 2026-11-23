@@ -7,7 +7,7 @@
 <%@ page import="utils.DBConnection" %> <%-- 1. IMPORT YOUR UTILITY CLASS --%>
 
 <%
-    String message = "";
+    String message = "";    
     // Get user data from session
     Integer currentUserId = (Integer) session.getAttribute("userId");
     String currentUserName = (String) session.getAttribute("username");
@@ -161,41 +161,41 @@
     <% } %>
 
     <form method="post">
-        <div class="input-wrapper">
-            <label for="oldPassword">Present Password:</label>
-            <input type="password" id="oldPassword" name="oldPassword" required />
-            <i
-                id="toggleIconOld"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('oldPassword', 'toggleIconOld')"
-                title="Show/Hide Present Password"
-            ></i>
-        </div>
+    <label for="oldPassword">Present Password:</label>
+    <div class="input-wrapper">
+        <input type="password" id="oldPassword" name="oldPassword" required />
+        <i
+            id="toggleIconOld"
+            class="fa-solid fa-eye toggle-icon"
+            onclick="togglePassword('oldPassword', 'toggleIconOld')"
+            title="Show/Hide Present Password"
+        ></i>
+    </div>
 
-        <div class="input-wrapper">
-            <label for="newPassword">New Password:</label>
-            <input type="password" id="newPassword" name="newPassword" required />
-            <i
-                id="toggleIconNew"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('newPassword', 'toggleIconNew')"
-                title="Show/Hide New Password"
-            ></i>
-        </div>
+    <label for="newPassword">New Password:</label>
+    <div class="input-wrapper">
+        <input type="password" id="newPassword" name="newPassword" required />
+        <i
+            id="toggleIconNew"
+            class="fa-solid fa-eye toggle-icon"
+            onclick="togglePassword('newPassword', 'toggleIconNew')"
+            title="Show/Hide New Password"
+        ></i>
+    </div>
 
-        <div class="input-wrapper">
-            <label for="confirmPassword">Rewrite Password:</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required />
-            <i
-                id="toggleIconConfirm"
-                class="fa-solid fa-eye toggle-icon"
-                onclick="togglePassword('confirmPassword', 'toggleIconConfirm')"
-                title="Show/Hide Rewritten Password"
-            ></i>
-        </div>
+    <label for="confirmPassword">Rewrite Password:</label>
+    <div class="input-wrapper">
+        <input type="password" id="confirmPassword" name="confirmPassword" required />
+        <i
+            id="toggleIconConfirm"
+            class="fa-solid fa-eye toggle-icon"
+            onclick="togglePassword('confirmPassword', 'toggleIconConfirm')"
+            title="Show/Hide Rewritten Password"
+        ></i>
+    </div>
 
-        <input type="submit" value="Change Password" />
-    </form>
+    <input type="submit" value="Change Password" />
+</form>
     <div class="back-link">
         <a href="Settings.jsp">Back to Settings</a>
     </div>
